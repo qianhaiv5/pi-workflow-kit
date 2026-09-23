@@ -1,0 +1,8 @@
+
+# ---- kit 追加：临时产物与运行噪音 ----
+stdout.txt
+stderr.txt
+out*.txt
+err*.txt
+__pycache__/
+*.pyc

@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "godot-mcp-native": {
+      "url": "http://localhost:9080/mcp"
+    },
+    "godot-mcp-runtime": {
+      "command": "godot-mcp-runtime",
+      "args": [],
+      "env": {
+        "GODOT_PATH": "{{GODOT_DOCS_DIR}}/Godot_v4.7.1-stable_mono_win64/Godot_v4.7.1-stable_mono_win64.exe"
+      }
+    },
+    "codebase-memory-mcp": {
+      "command": "codebase-memory-mcp",
+      "args": [],
+      "env": {
+        "CBM_CACHE_DIR": ".codebase-memory/cache"
+      }
+    }
+  }
+}

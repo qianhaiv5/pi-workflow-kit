@@ -1,0 +1,29 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+stdout.txt
+stderr.txt
+out*.txt
+err*.txt
+
+# codebase-memory-mcp cache (regenerable index)
+.codebase-memory/
+# C# build artifacts
+scripts/cs/.godot/
+scripts/cs/bin/
+scripts/cs/obj/
+
+# 地图瓦片缓存 (download_tiles.py 可再生)
+assets/map_tiles/
+
+# gdmcp CLI (regenerable toolchain)
+.gdmcp/
+
+# Python cache (tools/*.py)
+__pycache__/
+*.pyc
+
+# Track B 母版原片（不入 res:// 导入 / 不入库；仅追踪 .gdignore 标记）
+assets/panoramas/_raw/*
+!assets/panoramas/_raw/.gdignore

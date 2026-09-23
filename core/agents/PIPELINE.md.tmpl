@@ -1,0 +1,244 @@
+# 游戏开发流水线使用说明书 —— {{PROJECT_NAME}}
+
+## 快速开始
+
+在项目目录 `{{PROJECT_ROOT}}/` 下，对 pi 说：
+
+```
+我要实现 [功能描述]，请按完整流水线执行
+```
+
+或更简单：
+```
+我要做一个 [功能名]
+```
+
+## 流水线架构
+
+```
+玩家一句话
+    │
+    ▼
+┌──────────────┐
+│ Coordinator  │ ← 你的 pi 主会话 (depth 0)
+│  总领 AI     │   理解意图 → 分级决策 → 拆解任务 → 调度执行 → 验收判定
+└──────┬───────┘
+       │
+       │ 档位判定：Lite / Normal / Full（见「任务分级决策表」）
+       ▼
+┌─────────────────────────────┐
+│ 阶段 0.4 范围审计 (P1.5)    │ ← /scope-check 只读审计，PASS 才放行 spawn
+│ 强制：每个子代理 spawn 前   │    FAIL → 修正任务书/升降档 → 仍 FAIL 人工介入
+└──────────────┬──────────────┘
+               │
+               ▼ 按档位路由
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│  Designer    │──▶│  Architect   │──▶│  Programmer  │──▶ 自检/单测 ─▶ ✅/🔄
+│  (Full 按需) │   │ (Normal/Full)│   │ (全部档位)   │
+└──────────────┘   └──────────────┘   └──────┬───────┘
+                                              │ 验收
+                                              ▼
+                                      ┌──────────────┐
+                                      │   Tester     │──▶ ✅/🔄
+                                      │ (Normal/Full)│
+                                      └──────────────┘
+                                            │ 不通过 → 回 Programmer
+                                            │ (最多 2 轮自动修复)
+       ▲ 定期/关键节点介入                   │
+┌──────┴───────────────┐                └─▶ 判定：误判直接接受 / 真 bug 才修复
+│  Systems Maintainer  │
+│  项目系统维护师       │
+│  巡检/资产/质量/治理  │
+└──────────────────────┘
+```
+
+## 任务分级决策表（单一事实源，2026-08-28 精简工作流）
+
+> Coordinator 阶段 0 判定档位；/scope-check 审计确认；子代理任务书按档位裁剪。
+
+| 档位 | 任务类型 | 子代理流程 | 测试范围 |
+|------|---------|-----------|---------|
+| **Lite** | Bug 修复 / 纯 UI 调整 / 性能优化 / 代码重构 / 文档 / 简单节点脚本增删 | programmer 直做（无 architect/tester） | programmer 自检 + 受影响模块单测 |
+| **Normal** | 新功能（单场景内）/ 新模块（无存档交互） | architect → programmer → tester | 仅受影响模块 + L1，**不跑全量** |
+| **Full** | 跨场景流程 / 新系统 / 存档变更 / 数值设计 / 里程碑 | designer（按需）→ architect → programmer → tester | 全量 L1-L4 + 健康门禁 + 复盘 |
+
+**红线升档**：任务触碰状态容器/存档、跨场景、跨语言边界、输入系统 → 至少升一档。
+**成本原则**：Normal 不跑全量（见 §测试执行分级口径）；Lite 不产 ADR/设计文档；修复轮不自动全量回归。
+
+### 档位工具面（**2026-09-23 拍板** · 补丁 I 起**真实生效**）
+
+> **背景**：2026-09-23 前 `.pi/agents/*.toml` 的 `tools:` / `disallowed_tools:` **从未生效**（冒号语法 ⇒ 四条 toml 连严格 TOML 都不过；且上游 `loadSubagentTypeFromFile()` 不读该键、`createSpawnAgentDefinitionFromType()` 硬编码默认集）⇒ 所有档位拿到同一套 5 工具。补丁 I（`node ~/.pi/agent/bin/apply-collab-patches.mjs --check` 应报 `I=true`）已使其真生效，**并由 argv 级牙口钉住**（`node ~/.pi/agent/bin/patchI-teeth.mjs`）。
+
+| 档位 | tools（白名单，**显式声明，禁靠默认**） | disallowed | 依据 |
+|---|---|---|---|
+| **architect**（**只读参考档**） | read, grep, find, ls, agent_message | write, edit | 只产出裁决/设计文本 → 不得写文件。**只读档的法定形态 = 无 write / edit / bash / mcp**（bash 能重定向写文件，mcp 含 `modify_script` ⇒ 二者都会破坏只读性） |
+| **tester** | read, grep, find, ls, bash, write, edit, agent_message | mcp | 必须自写验收报告 + 改 `.pi/designs/README.md` 索引行（2026-09-23 两轮实证）；bash 跑引擎 CLI / 测试脚本（见 pack） |
+| **systems-maintainer** | read, grep, find, ls, bash, write, edit, agent_message | mcp | 必须写巡检报告 + 回写 `CONTEXT.md` / README |
+| **designer** | read, grep, find, ls, **bash**, write, edit, agent_message | mcp | 写 GDD/设计文档（write/edit）＋ 只读核验文档规模/结构（`wc -l` / `git status`）；⚠️ 已有 write ⇒ 加 bash **不引入新权限面**（bash 写文件与 write 同级） |
+| **programmer** | read, write, edit, grep, find, ls, bash, **mcp**, agent_message | — | mcp 是 引擎资源改动的第二合法通道（R1：引擎 CLI CLI **或** MCP） |
+| **coordinator** | read, write, edit, grep, find, ls, bash, mcp, Agent, agent_message, subagent, get_subagent_result, steer_subagent | — | 全量（含调度类工具） |
+
+**两条铁律**：
+1. **路径级限制不可行**：`--tools` 只有**工具名粒度**（无路径/命令级约束）⇒ 声明只能回答「能不能用某类工具」，回答不了「能不能改这个文件」。
+2. **因此真护栏 = Coordinator 收尾三连核（强制）**：每个子代理收口后，Coordinator 必须跑
+   ```bash
+   git status --short        # ① 改动面
+   git diff --stat           # ② 体量
+   git diff <文件>           # ③ 关键文件逐行核（阈值/常量/契约「逐字未变」类断言）
+   ```
+   并与**派单白名单逐条对照**；越界 ⇒ 回退该改动 + 记入报告「越界登记」节（2026-09-23 两次实证：MightyOcean 越界改 `健康门禁.py` 且自述否认（经独立复核后纳批）；两轮 tester 均只碰允许面）。
+
+**变更规程**：新增/修改档位声明 ⇒ ① 改 toml（合法 TOML + 显式声明）② `python -c "import tomllib…"` 过严格校验 ③ 跑 `patchI-teeth.mjs` ④ **改扩展的补丁（I 本身）需新进程（restart/`/reload`）才生效；toml 改动被扩展每次 spawn 现读，但读取者是扩展代码** ⇒ 两者均以「新进程」为准。
+
+### 测试执行分级口径（**含验收者** · 2026-09-18 加严）
+
+> 起因：Reviewer（tester）在 Lite/Normal 任务里仍跑全量测试 ⇒ 任务时长暴涨（全量 ≈180s/次量级，反复 = 主要成本项）。
+> 铁律：**全量回归是 Full 档特权**，任何角色（含 Coordinator 的独立复算）都受此约束。
+
+| 角色 | Lite | Normal | Full |
+|---|---|---|---|
+| programmer 自检 | 受影响模块单测 | 受影响模块 + L1 | 受影响模块 + L1 |
+| **tester（验收）** | 受影响模块单测（改前/改后同一命令对照） | 受影响模块 + L1，**禁全量** | 全量 L1–L4 **一次** + `健康门禁` |
+| **Coordinator（独立复算）** | 定向复算（关键断言/单文件 定向过滤） | 受影响模块 + 关键断言定向复算 | 全量 **一次** + `健康门禁` |
+
+**全量测试 允许触发的白名单**（除 Full 档外仅这三种）：
+1. 本批改动触碰**测试基础设施/门禁/基线数字**（健康门禁脚本、配套门禁脚本、用例计数、状态容器行数断言、md5 冻结表、测试隔离机制）⇒ 基线必须重算；
+2. 提交**里程碑/发布**前的一次总检；
+3. 玩家明确要求。
+
+**成本账（口径：以最近一次全量实测为准）**：源项目实测 全量 ≈ **160–213 s**；单模块定向 ≈ **5–20 s**（新项目首次全量后回写本行）。
+> ⚠️ 脚本/用例数**随批次增长** ⇒ **禁把数字当长期不变基线**；要核对现值就跑一次全量并回写本行。
+**工具**：测试入口分「定向」与「全量」两个显式命令（具体命令由 pack 提供，禁用「先跑全量看看」）。
+**修复轮**：不自动全量回归（沿用既有原则）；基线未变时不得重复全量。
+
+## 例行维护（线外 · 2026-09-19 固化）
+
+- **触发**：玩家说「**例行巡检**」（或「周检」「跑一次例检」）。
+- **执行者**：`systems-maintainer`，逐步照做 `.pi/agents/例行巡检-checklist.md`（架构健康 · 资产标准化 · 质量验证 · 运维 · 知识治理 + 交付收口 + 完成判据）。
+- **硬纪律**：测试默认定向、**全量 ≤1 次**（PIPELINE §测试执行分级口径）· 长命令落盘一次再读 · 只读巡检 · 每轮回写索引与挂账状态 ·
+  **每轮 commit + push 两个仓库**（`{{PROJECT_REPO}}` 与 `pi-config-backup`）· 报告落 `.pi/designs/巡检报告-<date>-<时段>.md`。
+- **产物**：巡检报告（五项判定 + P0/P1/P2 行动清单 + 记账 + 趋势）→ 行动清单交 Coordinator 派单（programmer/tester）。
+
+## 五个子 Agent
+
+| Agent | 工具权限 | 模型 | 关联 Skill | 触发时机 |
+|-------|---------|------|------------|---------|
+| **designer** | read-only + MCP + write(仅设计文档) | deepseek-flash (high) | game-design-grill, game-domain-modeling | 新机制/系统/数值设计（按需） |
+| **architect** | read-only + MCP | deepseek-flash (high) | game-architecture-review, game-design-grill, game-domain-modeling | 所有任务 |
+| **programmer** | read/write/edit + MCP | {{MODEL_HIGH}} | game-domain-modeling | 所有任务 |
+| **tester** | read-only + MCP + bash | {{MODEL_MEDIUM}} | （pack 技能：TDD / bug-hunt） | 所有任务 |
+| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | {{MODEL_HIGH}} | game-architecture-review | 定期巡检/关键节点评审/复盘治理（按需） |
+| **scope-check（技能）** | 只读（read/grep/find/ls/bash 只读） | —（Coordinator 内嵌调用） | scope-check | **强制**：spawn 任何子代理前 |
+
+> 表中出现的 pack 专属技能（如架构审查 / 安全重构）由所选 pack 提供；未装该 pack 时该列技能不可用。
+
+## 执行流程
+
+### 阶段 0：意图理解 + 分级决策
+Coordinator 用 MCP 工具了解项目现状，确认玩家意图，判定档位（Lite/Normal/Full）
+
+### 阶段 0.4：范围审计（P1.5，强制）
+spawn 任何子代理前先 `/scope-check`：分级匹配 / 任务书越界 / 红线升档 / 工具约束 / 成本校验 → PASS 放行 / FAIL 拦截
+
+### 阶段 0.5：概念设计（按需触发）
+designer 进行深度设计访谈，产出：
+- **GDD**（Game Design Document）— 机制、数值、UI/反馈
+- **核心循环图** — 动作→反馈→奖励→成长 闭环
+- **设计支柱** — 3 根支柱，每个决策服务至少一根
+- **风险登记** — 严重度/可能性/缓解措施
+- **MVP 范围** — 最小可行版本定义
+
+触发条件：新玩法机制、新系统、跨场景流程、数值设计
+跳过条件：Bug 修复、纯 UI 调整、性能优化、代码重构
+
+### 阶段 1：架构设计
+architect 产出 ADR + 场景契约 + 跨语言/跨模块边界定义
+（如有阶段 0.5，以 designer 的 GDD 为输入）
+
+### 阶段 2：编码实现
+programmer 根据设计实现代码（语言/文件类型策略见 pack 与项目宪法）
+
+### 阶段 3：验收测试
+Normal 档 tester 只测受影响模块 + L1；Full 档全量 L1-L4
+
+### 阶段 4：验收判定 + 自动修复循环（最多 2 轮，2026-08-28 精简）
+- 通过 → 向玩家报告
+- 失败 → **Coordinator 先读日志判定误判 vs 真 bug**（不再自动重测）
+  - 误判（测试环境问题/既有失败）→ 直接接受，记录 false positive
+  - 真 bug → 修复循环：programmer 修复 → 重跑受影响测试（不自动全量）
+- 超过 **2 轮**仍失败 → 停止自动修复，请求人工介入
+- 设计问题 → 回到阶段 1
+
+### 阶段 5：复盘与进化（条件触发，2026-08-28 收紧）
+仅当满足任一条件才复盘：出现新模式/新坑、跨系统影响（存档/信号契约/autoload）、修正了流水线本身。
+1. **设计偏差回写（仅当有设计文档 ∧ 实际发生偏差）**：回写文档末节「实际补充与修正」（记录：新字段、新增模块、对原设计的修正、测试覆盖、已知限制；凡与原文冲突以该节为准）。无偏差 → 只追加一行状态，不写全文。
+2. 新模式/新坑 → 写入 LESSONS.md，检查是否需要更新 AGENTS.md
+3. **收尾硬清单 · 推送断言（2026-09-23 立，Q6）**：任何声称「已交付」的批次，收尾必须跑
+   ```bash
+   node ~/.pi/agent/bin/push-assert.mjs          # 默认两仓：{{PROJECT_ROOT}} + ~/.pi/agent
+   ```
+   判定只看两个硬事实：`git push origin HEAD` 的**显式退出码** + 推送后 `git rev-list --count origin/master..master == 0`（证明书）。
+   - **禁**用 `git push … | tail -1 || retry` 判失败：管道让退出码失真（`tail` 的 0 覆盖 `push` 的 1）⇒ 重试分支永不触发（LESSONS「push 瞬断先重试」）。
+   - 失败**先重试**（脚本内 5s/10s，最多 3 次），仍失败 ⇒ **非 0 退出**；此时报告必须写明「**未推送 + AHEAD 数**」，禁静默当作已交付。
+   - 自验：`node ~/.pi/agent/bin/push-assert.mjs --self-test`（TEMP bare 远端 + 两次克隆，19/19）；预演：`--dry-run`（只打印命令 + 当前 AHEAD）。
+
+### 阶段 6：系统健康（定期/关键节点）
+Coordinator 按需触发 systems-maintainer 执行：
+- **架构巡检** — 依赖健康/技术债清单/质量度量（对照项目宪法红线）
+- **资产沉淀** — 新模式/新坑写入 SKILL.md 与 docs 规范，术语更新 CONTEXT.md
+- **质量防线** — 测试全量回归 + 引擎脚本/资源校验 + 构建门禁 + **项目健康门禁脚本（pre-commit 自动跑；具体命令见 pack）**
+- **知识治理** — ADR 归档、LESSONS 转化为团队准则
+
+## 核心约束
+
+| 规则 | 说明 |
+|------|------|
+<!-- pack:godot:start -->
+| CLI 优先 | 所有 Godot 操作走 gdmcp CLI 或 MCP，不直接编辑 .tscn/.tres/.gd |
+| 继承边界 | GDScript ≠↔≠ C# 互继承，共享用组合/EventBus |
+| C# 编译 | 每次 C# 变更后必跑 `dotnet build` |
+| 跨语言封装 | C#↔GDScript 互操作走 Bridge 类 |
+<!-- pack:godot:end -->
+| 复盘进化 | 每次任务后更新 LESSONS.md |
+<!-- pack:godot:start -->
+| **环境前置（2026-09-23 加严）** | 见下方专项：碰 `.gd/.tscn` 的任务**开工前必须验/起编辑器**，且**全场只允许一个** |
+<!-- pack:godot:end -->
+
+- programmer 修改前自动预留文件
+- **子代理收尾约定（2026-08-28）**：最终交付必须以**纯文本消息总结收尾**（最后一条消息禁止是工具调用），格式 `## 交付报告：<内容>（改动/结果/偏差）`——launch 结果回传偶发 no output（子代理完整报告仍在 session 文件），Coordinator 完成时统一用 `agent_message tail` 提取最终消息确认，不依赖 launch preview
+- 并行 programmer 分配的模块不重叠
+- tester 只读，不写文件
+
+<!-- pack:godot:start -->
+### 🔴 环境前置：编辑器 / gdmcp 通道（2026-09-23 事故后加严，**每个 Godot 写任务开工必做**）
+
+**事故**：A3 程序员子代理开工时**编辑器没在跑**（端口 9080 无监听）⇒ 全程 99 条工具结果里 gdmcp 成功 **0 次**（全 `SERVICE_UNREACHABLE`）⇒ 它改用 `bash + python -c` **直写 `.gd`**，静默违反宪法 R1 共 8 个文件；随后又以 `Data cannot be cloned, out of memory.`（**exit 134**）崩掉。另一侧：续跑者发现 9080 已通却**又自起一个 headless 编辑器** ⇒ 两个编辑器共占 **2.6 GB**（正是同类 OOM 的现成诱因）。
+
+**开工三步（写进每份任务书的任务书·环境段）**：
+```bash
+# ① 先探（不写任何代码前）
+MSYS_NO_PATHCONV=1 ./.gdmcp/bin/gdmcp.exe --json doctor   # 或：curl -s -o /dev/null -w "%{http_code}" -m 3 http://127.0.0.1:9080/cli/v1/doctor
+# ② 不通则**自起一个**（editor_connected=true 是写通道的硬前提）
+#    Godot_*.exe --editor --headless --path <项目>   → 约 6s 后端口就绪；**记下 PID**
+# ③ 起完再查一次：Get-Process Godot*  ——  同类型编辑器**允许恰好 1 个**，多于 1 个立刻 kill 自己多余的那个
+```
+- **禁**：编辑器不通就“先用 write/edit/bash 直写 `.gd` 后面再验”——那就是 R1 违规；正确做法是 ② 先修通道再动手。
+- **验收侧**：Coordinator 核子代理是否守规，**不看自述**：读它的 session jsonl 数 `ok:true` 条数 + 看工具直方图（`edit/write` 落在 `.gd/.tscn` 上即违规）。先例：`LESSONS.md` 2026-09-23（续二）§2。
+- ⚠️ **「编辑器数」判据要按参数去重，不能按进程数**（2026-09-23 实测）：Mono 版是 **`Godot_*_console.exe` + `Godot_*win64.exe` 两个进程、参数完全相同**（启动器 + 真编辑器）⇒ `Get-Process Godot* | Measure-Object).Count == 2` 是**正常的 1 个逻辑编辑器**，不是「重复起了」。判重复的正确做法：列出各进程的 `CommandLine`，**按 `--path`/`--editor` 等参数去重后数**；真重复 = 出现**两组同参数进程**。
+- **收尾**：自起的编辑器在任务收口时 kill（先例 `.pi/designs/S4-3a-布局bug修复报告.md`），`netstat :9080` 应回空。
+
+<!-- pack:godot:end -->
+## 相关技能
+
+| 技能 | 用途 | 触发方式 |
+|------|------|---------|
+| game-design-grill | 设计新功能前追问清楚（designer 自动使用） | `/game-design-grill` 或 designer 自动触发 |
+<!-- pack:godot:start -->
+| game-architecture-review | 每周架构审查 | `/game-architecture-review` |
+| godot-tdd | 测试驱动开发 | 自动被 programmer/tester 使用 |
+| godot-bug-hunt | 调试循环 | `/godot-bug-hunt` |
+<!-- pack:godot:end -->
+| game-domain-modeling | 术语表维护 | 自动维护 CONTEXT.md |
+<!-- pack:godot:start -->
+| **safe-refactor** | **安全重构三步法（上帝对象拆分/autoload迁移/存档零风险）** | 核心系统重构时 architect 设计 + programmer 执行必读（ADR-002 范式） |
+<!-- pack:godot:end -->

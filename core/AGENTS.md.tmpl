@@ -1,0 +1,93 @@
+<!-- codebase-memory-mcp:start -->
+# Codebase Knowledge Graph (codebase-memory-mcp)
+
+Use MCP graph tools for code discovery. Priority:
+1. `search_graph` — find functions, classes, routes, variables
+2. `trace_path` — trace callers/callees
+3. `get_code_snippet` — read function/class source
+4. `query_graph` — Cypher for complex patterns
+5. `get_architecture` — high-level summary
+
+Fall back to grep/glob only for: string literals, error messages, config values, non-code files.
+<!-- codebase-memory-mcp:end -->
+
+<!-- project-constitution:start -->
+# 项目宪法
+
+**项目：** 《{{PROJECT_NAME}}》{{PROJECT_NAME_EN}}
+**引擎：** {{ENGINE}} {{ENGINE_VERSION}}
+**判定：** {{CORE_MECHANIC}}
+**架构：** {{ARCH_LAYERING}}
+
+## 🔴 红线（触碰即炸）
+
+| # | 规则 |
+|---|------|
+| R1 | **通用文件纪律入 git 前自检**：见下方「交付前自检」；引擎专属红线 R1x 由引擎块提供（见本文末「引擎块」节） |
+| R2 | **所有文件 UTF-8 Without BOM** |
+| R3 | **零引用原则**：企划书/任务规划/架构设计自包含，禁止"同上一版""详见Vx.x" |
+| R4 | **单向依赖**：{{ARCH_LAYERING}}。下层绝不 import 上层内容 |
+| R5 | **单点事实源**：任何阈值/契约/枚举只在一处定义，其它位置引用它（禁止复制常量） |
+| R6 | **禁静默降级**：门禁/测试/配置阈值不得为「先过」而放宽；要调 = 新 ADR + 用户拍板 |
+
+{{ENGINE_REDLINES}}
+
+## 🟡 架构原则
+
+- **术语统一**：对话/文档使用 `docs/术语表.md` 中的术语；复盘发现新术语或其他文档已总结的术语，一律追加写入该文件
+- **场景/模块驱动**：每个场景（或模块入口）独立，通过事件总线/信号通信
+- **信号命名**：过去式，如 `item_collected`, `scene_changed`
+- **@onready var 路径**（或等价绑定）与场景节点树一致
+- **资源路径** 全部以引擎约定的根前缀开头（见引擎块）
+- **配置化**：难度档位/权重/修正因素全部 JSON/表格管理
+- **数值表外置**：设计用 .xlsx → `tools/export_excel.py` → JSON → 引擎读取
+
+## 🟢 行为红绿灯
+
+- 🔴 必须请示：外部凭证/付款/正式发布/删除大量文件
+- 🟡 谨慎处理：大规模重构/修改核心系统(存档/场景切换)/引入新依赖
+- 🟢 自主执行：Bug修复/UI调整/代码优化/添加日志/编写文档
+
+## 交付前自检
+
+| # | 检查项 | 方法 |
+|---|--------|------|
+| 1 | 文件 BOM | 首字节不为 0xEF 0xBB 0xBF |
+| 2 | 调试日志 | `[debug]` 段持久化在项目主配置文件中 |
+| 3 | 验证截图清理 | docs/ 下自动截图验证图（jpg/png）连同 `.import` 一并删除，零残留 |
+| 4 | 设计文档偏差回写 | 本任务有对应设计文档 ∧ **实际发生补充/修正/偏离** → 收尾回写文档末节「实际补充与修正」（新字段/模块/修正/限制）；无设计文档或无偏差 → 跳过（PIPELINE 阶段 5） |
+| 5 | 素材/资源替换复核 | 删除或替换任何资源文件后 → **无过滤全量 grep 复核**（`grep -rn "旧名" --include="*.gd" --include="*.tscn" --include="*.json" .`，排除引擎缓存/addons/.import/测试）；grep 过滤四盲区：-v uid 杀 tscn ext_resource、res:// 前缀漏相对路径、head 截断、walk 漏 list 字符串 |
+| 6 | 测试断行为不断非空 | 关键渲染/行为路径必须断**参数/像素/方向值**，禁止只断 `!= null`（UV 像素坐标 bug 被 load 层断言掩盖的先例） |
+| 7 | 技能/文档落地自检 | 新建或修改 `.pi/skills/<name>/SKILL.md` → ① 首字节 `---`（有 frontmatter，含 `name` + `description`，否则模型不可发现）② **禁止整篇抄 `docs/**` 正文**（技能=触发+索引+指针；正文只留 docs 一份）③ 技能内硬约束与 docs 冲突→以 docs 为准。自检：`for d in .pi/skills/*/; do head -c3 $d/SKILL.md | grep -q '^---$' || echo "缺 frontmatter: $d"; done` |
+
+{{ENGINE_SELFCHECKS}}
+
+## Pipeline
+
+```
+玩家一句话 → Coordinator(意图+分级 Lite/Normal/Full) → scope-check(强制审计) → Designer(Full按需) → Architect(Normal/Full) → Programmer → Tester(Normal/Full) → 验收/修复循环(≤2轮) → 复盘(条件触发)
+```
+
+详见 `.pi/agents/PIPELINE.md`（任务分级决策表 + P1.5 范围审计）
+<!-- project-constitution:end -->
+
+<!-- caveman-default:start -->
+# Caveman Mode (Default ON)
+
+Output compressed ~65%. No articles, no pleasantries, no tool-call narration. Code blocks and technical terms verbatim. Off: "stop caveman" or "normal mode".
+<!-- caveman-default:end -->
+
+<!-- self-evolution:start -->
+# Self-Evolution
+
+Every task ends with review. Lessons → `LESSONS.md`.
+- What went well? → reinforce
+- What went wrong? → add prevention rule
+- What pattern emerged? → add reusable pattern
+<!-- self-evolution:end -->
+
+<!-- engine-blocks:start -->
+# 引擎块（由 kit 的 pack 注入）
+
+{{ENGINE_BLOCKS}}
+<!-- engine-blocks:end -->
