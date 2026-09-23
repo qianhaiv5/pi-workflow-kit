@@ -8,10 +8,10 @@
 在新主机的 pi 里说：
 
 ```
-克隆 https://github.com/qianhaiv5/pi-config-backup.git 到 ~/.pi/agent，然后读 ~/.pi/agent/kit/BOOTSTRAP.md 并严格逐步执行
+克隆 https://github.com/qianhaiv5/pi-config-backup.git 到 ~/.pi/agent，克隆 https://github.com/qianhaiv5/pi-workflow-kit.git 到 ~/.pi/agent/kit，然后读 ~/.pi/agent/kit/BOOTSTRAP.md 并严格逐步执行
 ```
 
-（kit 随全局配置仓一起来；也可把本目录拆成独立仓，见 §拆成独立仓。）
+（本仓 = 工具箱；`pi-config-backup` = 全局配置。两仓分开 ⇒ 工作流可复用，配置含机器专属内容。）
 
 ## 目录
 
@@ -82,14 +82,23 @@ cp -r ~/.pi/agent/kit/packs/godot ~/.pi/agent/kit/packs/<engine>
 # 再在 extract-kit.mjs 的 MARKERS 里登记新 pack 的标记（若该引擎内容也嵌在 core 文件里）
 ```
 
-## 拆成独立仓（可选）
+## 本仓就是独立仓
 
-```bash
-cd ~/.pi/agent
-git subtree split -P kit -b kit-solo      # 生成只含 kit 的分支
-git push <kit-remote-url> kit-solo:main   # 推到新仓（如 qianhaiv5/pi-workflow-kit）
-```
-拆出后 BOOTSTRAP 的第 0 步改成先 clone kit 仓即可，其余步骤不变。
+- **仓**：https://github.com/qianhaiv5/pi-workflow-kit （工作流工具箱，可给别的机器/团队复用）
+- **本机落地位置**：`~/.pi/agent/kit/`（`pi-config-backup` 仓的工作树里，已被其 `.gitignore` 忽略 ⇒ 两仓互不干扰）
+- **日常**：在本目录改 → `git add -A && git commit` → `git push origin main`
+- **无 gh CLI 时建仓**（一次性，网页或 API 二选一）：
+  ```bash
+  # 网页：New repository → 名字 pi-workflow-kit → 不要初始化 README
+  # 或 API（用 git 自己的凭据，不落盘）：
+  CRED=$(printf 'protocol=https
+host=github.com
+
+' | git credential fill)
+  TOKEN=$(printf '%s
+' "$CRED" | sed -n 's/^password=//p')
+  curl -s -X POST -H "Authorization: token $TOKEN" https://api.github.com/user/repos     -d '{"name":"pi-workflow-kit","description":"pi 多代理工作流工具箱（core + engine packs）","private":false}'
+  ```
 
 ## 边界（这些不在 kit 里）
 

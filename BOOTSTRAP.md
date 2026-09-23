@@ -1,15 +1,19 @@
 # BOOTSTRAP —— 新主机 / 新项目 一键安装书（给 pi 读，逐步执行）
 
-> **用户只需在新主机的 pi 里说这一句**（`~/.pi/agent` 已存在则用第二句）：
+> **本文件属于独立仓 `pi-workflow-kit`（工作流工具箱）**；配套的全局配置在 `pi-config-backup`（`~/.pi/agent`）。
+> **用户在新主机的 pi 里说这一句即可**：
 >
 > ```
-> 克隆 https://github.com/qianhaiv5/pi-config-backup.git 到 ~/.pi/agent，然后读 ~/.pi/agent/kit/BOOTSTRAP.md 并严格逐步执行
+> 克隆 https://github.com/qianhaiv5/pi-config-backup.git 到 ~/.pi/agent，克隆 https://github.com/qianhaiv5/pi-workflow-kit.git 到 ~/.pi/agent/kit，然后读 ~/.pi/agent/kit/BOOTSTRAP.md 并严格逐步执行
 > ```
-> 已存在（升级/补装）：
+> 两仓都已存在（升级/补装）：
 > ```
-> git -C ~/.pi/agent pull --ff-only && 读 ~/.pi/agent/kit/BOOTSTRAP.md 并从 STEP 1 起核查
+> git -C ~/.pi/agent pull --ff-only && git -C ~/.pi/agent/kit pull --ff-only && 读 ~/.pi/agent/kit/BOOTSTRAP.md 并从 STEP 1 起核查
 > ```
-> 无法用 git 时（网络受限）：`curl -fsSL https://raw.githubusercontent.com/qianhaiv5/pi-config-backup/master/kit/BOOTSTRAP.md` 先取本文件，按 STEP 0 的网络处置走。
+> 网络受限时的替代取法（先取本文件再照做）：
+> `curl -fsSL https://raw.githubusercontent.com/qianhaiv5/pi-workflow-kit/main/BOOTSTRAP.md`
+> 只要工具箱、不要全局配置（已配好 pi 的机器上刷新工作流）：
+> `git -C ~/.pi/agent/kit pull --ff-only` 后跳到 **STEP 2**。
 
 ---
 
@@ -152,3 +156,4 @@ node ~/.pi/agent/bin/push-assert.mjs
 - `~/.pi/agent/docs/collab-扩展本地补丁.md` —— 十枚补丁逐枚说明 + 牙口用法
 - `~/.pi/agent/docs/pi-版本与配置二分诊断.md` —— 模式 A/B 二分法
 - `~/.pi/agent/AGENTS.md` —— 工作流记忆（本机 pi 的行为约定）
+- **工具箱仓**：https://github.com/qianhaiv5/pi-workflow-kit （本文件所在仓；`README.md` 讲结构与维护）
