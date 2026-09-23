@@ -65,6 +65,13 @@ const FILES = [
 const SKILLS_CORE = ["agent-browser", "caveman", "game-design-grill", "game-domain-modeling", "scope-check"];
 const SKILLS_GODOT = ["game-architecture-review", "gdmcp", "godot-bug-hunt", "godot-docs", "godot-tdd", "map-development", "safe-refactor"];
 
+/* ── ③b2 正则改写（容错：从源项目里“抹掉”具体布局，换成单一占位符） ── */
+const RULES = [
+  // <project>/.mcp.json 的 GODOT_PATH 是**源机布局**（安装目录/子目录名/版本号）⇒ 只保留 `{{GODOT_PATH}}`，
+  // 旧版把 `D:/Godot4.7` 单换成 {{GODOT_DOCS_DIR}}，把 `Godot_v4.7.1-stable_mono_win64/…exe` 留在模板里 ⇒ 换机产出不存在路径（2026-09-24 上游反馈 #2）
+  { dst: "packs/godot/mcp.json.tmpl", re: /("GODOT_PATH"\s*:\s*)"[^"]*"/g, to: '$1"{{GODOT_PATH}}"' },
+];
+
 /* ── ③b core 专属结构化改写（精确串，命中不到即报漂移） ─────────── */
 const PATCHES = [
   { dst: "core/agents/PIPELINE.md.tmpl",
@@ -258,6 +265,10 @@ function transform(dstRel, raw) {
     text = text.split(p.from).join(p.to);
   }
   text = substitute(text);
+  for (const r of RULES.filter((r) => r.dst === dstRel)) {
+    if (!r.re.test(text)) { errs.push(`正则改写未命中：${dstRel} ← ${r.re}\n（源文件结构变了？同步改 extract-kit.mjs 的 RULES）`); continue; }
+    text = text.replace(r.re, r.to);
+  }
   if (dstRel.startsWith("core/")) text = applyCoreWords(text);
   // 行尾统一 LF：kit 是跨平台分发物，源项目里可能混 CRLF（外部技能包/手写文件）⇒ 不统一会与 --check 假漂移
   return text.split(String.fromCharCode(13) + String.fromCharCode(10)).join(String.fromCharCode(10));
@@ -309,6 +320,24 @@ const found = [...agentsSrc.matchAll(/<!--\s*([a-z0-9-]+):start\s*-->/g)].map((m
 const known = new Set([...AGENTS_BLOCKS_CORE, ...AGENTS_BLOCKS_PACK]);
 for (const b of found) if (!known.has(b)) errs.push(`AGENTS.md 出现未知块 "${b}" → 决定它归 core 还是 pack，并登记到 extract-kit.mjs 的 AGENTS_BLOCKS_*`);
 for (const b of known) if (!found.includes(b)) errs.push(`AGENTS.md 少了已知块 "${b}" → 源项目删了就同步从台账删`);
+
+// 落地前硬拦：生成物里不得残留机器专属绝对路径（本类 bug 的通用闻探）
+const ABS_RE = /(^|[^\w\]}>\"'])([A-Za-z]:[\\/][^\s"'`,()\]]*)/g;
+const absFindings = [];
+// 实测白名单：`D:/tmp` 是工作流里**约定的临时产物目录**（非机器布局），不是泄漏
+const ABS_ALLOW = ["D:/tmp"];
+for (const rel of new Set(written)) {
+  const abs = path.join(KIT, rel);
+  if (!fs.existsSync(abs)) continue;
+  const text = fs.readFileSync(abs, "utf8");
+  for (const m of text.matchAll(ABS_RE)) {
+    if (ABS_ALLOW.some((p) => m[2].toLowerCase().startsWith(p.toLowerCase()))) continue;
+    absFindings.push(`${rel}: ${m[2]}`);
+  }
+}
+if (absFindings.length) {
+  errs.push(`生成物里残留机器绝对路径（换机即失效）—— 把这些路径改成占位符或用 RULES 抹掉：\n` + absFindings.map((s) => "      " + s).join("\n"));
+}
 
 log(`写出/比对 ${written.length} 个文件（${written.filter((w) => w.startsWith("core/")).length} core · ${written.filter((w) => w.startsWith("packs/")).length} pack）`);
 if (CHECK) {

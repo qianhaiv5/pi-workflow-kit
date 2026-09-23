@@ -31,13 +31,26 @@ kit/
 │   │                      #   + 例行巡检 checklist + 5 个引擎技能 + mcp.json + gitignore + AGENTS.engine.md
 │   └── none/              # 无引擎占位包（core 照装，引擎块留「待补」）
 └── tools/
-    ├── extract-kit.mjs    # 从**跑着的项目**反向刷新 kit（占位符替换 + pack 标记 + 漂移检测）
-    └── apply-kit.mjs      # 把 core+pack 落到目标项目（占位符替换 + 块裁剪 + 引擎块注入）
+    ├── extract-kit.mjs    # 从**跑着的项目**反向刷新 kit（占位符替换 + pack 标记 + RULES 抹布局 + 漂移/绝对路径守卫）
+    ├── apply-kit.mjs      # 把 core+pack 落到目标项目（占位符替换 + 块裁剪 + 引擎块注入 + 目标守卫）
+    └── kit-teeth.mjs      # 牙口：32 项回归（用法/守卫/GODOT_PATH 参数化/无机器路径残留）
 ```
+
+## 硬约束（误跑防护，2026-09-24 事故后加）
+
+| 约束 | 行为 |
+|---|---|
+| `--target` 必填 | 缺省**不再回退 cwd**（旧版在 `~/.pi/agent` 里误跑会污染全局配置）⇒ 缺参数即 `exit 2` 且不落盘 |
+| 未知/错拼参数 | 直接 `exit 2` + 打印用法（防 `--targt` 这类静默跑错） |
+| 目标守卫 | 目标是 `~/.pi/agent`、或含 `settings.json`+`npm/node_modules`（看着像全局配置目录）、或**是 kit 自身所在树** ⇒ 拒写 `exit 2` |
+| 退出码 | `0` 成功 · `1` 运行期错误/残留占位符 · `2` 用法错误 |
+| 引擎路径 | `--godot-path` / `--godot-docs` 不给 ⇒ 落 `TODO-...` + 警告；**不猜源机布局**（旧模板把源机安装目录硬编码进 `.mcp.json`，换机必产出不存在路径） |
 
 ## 日常用法
 
 ```bash
+node ~/.pi/agent/kit/tools/apply-kit.mjs --help        # 全部参数与退出码
+
 # 预演（不落盘）
 node ~/.pi/agent/kit/tools/apply-kit.mjs --target <新项目> --pack godot --dry-run
 
@@ -71,6 +84,7 @@ node ~/.pi/agent/kit/tools/extract-kit.mjs --check          # 只校验同步（
 ```
 
 - 引擎字面量、项目路径/名/仓库名的替换表、pack 标记锚点、core 的「去引擎化」改写，**全部集中在 `extract-kit.mjs` 顶部四个表**（`REPLACEMENTS` / `FILES` / `PATCHES` / `CORE_WORDS` + `MARKERS`）。
+- 改完 `tools/**` 或模板**必跑牙口**：`node ~/.pi/agent/kit/tools/kit-teeth.mjs`（32/32，覆盖用法/守卫/引擎路径参数化/无机器路径残留）
 - **锚点/改写未命中会硬报错**，绝不静默跳过 ⇒ 源文档改了标题就来同步这张表。
 - `core/AGENTS.md.tmpl`、`CONTEXT.md.tmpl`、`LESSONS.md.tmpl`、`designs-README.md`、`packs/*/AGENTS.engine.md` 是**人工维护**的模板，`extract-kit` 不动它们（只对源项目 `AGENTS.md` 的块名做漂移检测）。
 

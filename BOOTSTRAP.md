@@ -96,7 +96,8 @@ node ~/.pi/agent/kit/tools/apply-kit.mjs \
   --arch-layering "content → features → autoload" \
   --init-git
 ```
-- 先预演可用 `--dry-run`（打印计划不落盘）。
+- 先预演可用 `--dry-run`（打印计划不落盘）；参数全表用 `--help`；`--target` **必填**（缺参数 `exit 2`，不会回退 cwd 误写全局配置）。
+- 给了 `--godot-path` 才会写真实路径；不给则 `.mcp.json` 落 `TODO-...` 并警告（模板不含源机布局）。
 - 非 Godot 项目：`--pack none`（core 照装，引擎块留「待补」）。
 - 已存在文件默认**不覆盖**；要覆盖加 `--force`。
 

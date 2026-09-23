@@ -8,14 +8,16 @@
  *   ③ 引擎块注入（pack 的 `AGENTS.engine.md` 三段 → 宪法里的 `{{ENGINE_REDLINES}}` / `{{ENGINE_SELFCHECKS}}` / `{{ENGINE_BLOCKS}}`）
  *   ④ 落盘映射（`core/agents/x.toml.tmpl` → `<target>/.pi/agents/x.toml` 等）
  *
- * 用法：
- *   node ~/.pi/agent/kit/tools/apply-kit.mjs --target <新项目根> [--pack godot|none] \
+ * 用法（`--help` 打印全文）：
+ *   node <kit>/tools/apply-kit.mjs --target <新项目根> [--pack godot|none] \
  *        [--name 中文名] [--name-en 英文名] [--repo git仓名] [--root 路径] \
  *        [--engine Godot] [--engine-version 4.7] [--model-high X] [--model-medium Y] \
- *        [--godot-path <exe>] [--godot-docs <dir>] [--dry-run] [--force] [--init-git]
+ *        [--godot-path <exe>] [--godot-docs <dir>] [--core-mechanic X] [--core-mechanic-note Y] \
+ *        [--arch-layering X] [--dry-run] [--force] [--init-git]
  *
+ * `--target` **必填**（2026-09-24 修正：旧版缺省 cwd ⇒ 在 `~/.pi/agent` 里误跑会污染全局配置，已加硬拦）。
  * 幂等：默认**不覆盖**已存在文件（列出「已存在跳过」），要覆盖加 `--force`。
- * 退出码：0 成功；1 有错误或缺必填项（--dry-run 下同样返回 1 便于先试）。
+ * 退出码：0 成功；1 运行期错误/残留占位符；2 用法错误（缺 --target / 未知参数 / 拒写全局配置目录）。
  */
 import fs from "node:fs";
 import os from "node:os";
@@ -26,10 +28,77 @@ const argv = process.argv.slice(2);
 const has = (k) => argv.includes(k);
 const val = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : d; };
 
+const USAGE = `apply-kit —— 把 kit（core + 选定 pack）落到一个新项目
+
+必填：
+  --target <目录>          新项目根（必填；不默认 cwd，防污染全局配置目录）
+
+可选：
+  --pack <godot|none>      引擎包（默认 godot）
+  --name / --name-en       项目中文名 / 英文名（默认取目录名）
+  --repo <git仓名>         项目仓名（默认取目录名）
+  --root <路径>            写入文档的绝对根路径（默认 = --target 实解析值）
+  --engine / --engine-version   引擎与版本（默认 Godot / 4.7）
+  --model-high / --model-medium 档位模型名（默认取 ~/.pi/agent/settings.json 的 defaultModel）
+  --godot-path <exe>       Godot 可执行文件（写入 .mcp.json；不给则落 TODO 并警告）
+  --godot-docs <目录>      Godot 文档目录（godot-docs 技能用；不给则落 TODO 并警告）
+  --core-mechanic X       项目宪法「判定」行；--core-mechanic-note Y 会拼成「X（Y）」
+  --arch-layering X       项目宪法「架构」行（默认 content → features → autoload）
+  --dry-run               只打印计划，不落盘
+  --force                 覆盖已存在文件（默认跳过）
+  --init-git              目标无 .git 时跑 git init
+  -h, --help              打印本说明
+
+退出码：0 成功 · 1 运行期错误/残留占位符 · 2 用法错误
+`;
+
+const KNOWN_FLAGS = new Set([
+  "--target", "--pack", "--name", "--name-en", "--repo", "--root", "--engine", "--engine-version",
+  "--model-high", "--model-medium", "--godot-path", "--godot-docs", "--core-mechanic", "--core-mechanic-note",
+  "--arch-layering", "--dry-run", "--force", "--init-git", "--help", "-h",
+]);
+
+if (has("--help") || has("-h")) { console.log(USAGE); process.exit(0); }
+for (const a of argv) {
+  if (!a.startsWith("-")) continue;
+  const name = a.split("=")[0];
+  if (!KNOWN_FLAGS.has(name)) {
+    console.error(`[kit] ✗ 未知参数 \`${name}\`（错拼会静默跑错目标，故硬拦）\n` + USAGE);
+    process.exit(2);
+  }
+}
+
+const targetArg = val("--target", "");
+if (!targetArg) {
+  console.error("[kit] ✗ 必须显式给 `--target <目录>`（旧版缺省会写 cwd；在 ~/.pi/agent 里误跑会污染全局配置）\n" + USAGE);
+  process.exit(2);
+}
+
 const DRY = has("--dry-run");
 const FORCE = has("--force");
 const PACK = val("--pack", "godot");
-const TARGET = path.resolve(val("--target", process.cwd()));
+const TARGET = path.resolve(targetArg);
+const AGENT_DIR = path.join(os.homedir(), ".pi", "agent");
+
+/* 硬拦：不把项目模板往 pi 全局配置目录（或其祖先，如 ~/.pi、~、kit 所在树）里写 */
+const looksLikeAgentDir = (p) =>
+  fs.existsSync(path.join(p, "settings.json")) && fs.existsSync(path.join(p, "npm", "node_modules"));
+const guardHit = (() => {
+  const norm = (p) => path.resolve(p).replace(/\\/g, "/").replace(/\/$/, "").toLowerCase();
+  const t = norm(TARGET);
+  if (t === norm(AGENT_DIR)) return "目标就是 pi 全局配置目录 ~/.pi/agent";
+  if (looksLikeAgentDir(TARGET)) return "目标含 settings.json + npm/node_modules，看着像 pi 全局配置目录";
+  const kit = norm(KIT);
+  if (kit === t || kit.startsWith(t + "/")) return `目标 ${TARGET} 是 kit 自身所在树（会覆盖工具箱）`;
+  return null;
+})();
+if (guardHit) {
+  console.error(`[kit] ✗ 拒写：${guardHit}\n` +
+    `[kit]    本项目模板只能落到**新项目目录**（如 D:/MyGame2）。若确要指向别处，先手动 mkdir 且确认那里不是全局配置。\n` +
+    `[kit]    （本检查由 2026-09-24 误跑事故加入：旧版 --target 缺省 cwd ⇒ 一次误跑污染了 ~/.pi/agent）`);
+  process.exit(2);
+}
+
 const BASENAME = path.basename(TARGET);
 const POSIX_ROOT = TARGET.replace(/\\/g, "/");
 
@@ -55,13 +124,14 @@ const VARS = {
   })(),
   ARCH_LAYERING: val("--arch-layering", "content → features → autoload"),
   GODOT_PATH: godotPath || "TODO-填-Godot-可执行文件路径",
-  GODOT_DOCS_DIR: val("--godot-docs", godotPath ? path.dirname(godotPath).replace(/\\/g, "/") : "TODO-填-Godot-文档目录"),
+  GODOT_DOCS_DIR: val("--godot-docs", "TODO-填-Godot-文档目录"),
   DATE: new Date().toISOString().slice(0, 10),
 };
 
 const warns = [];
 const errors = [];
 if (!godotPath && PACK === "godot") warns.push("未给 --godot-path：`.mcp.json` 的 GODOT_PATH 写成 TODO，装完必须手工改");
+if (!has("--godot-docs") && PACK === "godot") warns.push("未给 --godot-docs：godot-docs 技能的文档目录写成 TODO（不猜源机布局）");
 if (!has("--name")) warns.push(`未给 --name：默认用目录名「${VARS.PROJECT_NAME}」，宪法里的项目名要复核`);
 if (VARS.CORE_MECHANIC.startsWith("（待填")) warns.push("未给 --core-mechanic：宪法「判定」行是占位，装完必须手工改");
 if (!fs.existsSync(KIT)) errors.push(`kit 目录不存在：${KIT}`);
