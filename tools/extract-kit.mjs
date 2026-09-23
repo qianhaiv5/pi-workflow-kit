@@ -259,8 +259,10 @@ function transform(dstRel, raw) {
   }
   text = substitute(text);
   if (dstRel.startsWith("core/")) text = applyCoreWords(text);
-  return text;
+  // 行尾统一 LF：kit 是跨平台分发物，源项目里可能混 CRLF（外部技能包/手写文件）⇒ 不统一会与 --check 假漂移
+  return text.split(String.fromCharCode(13) + String.fromCharCode(10)).join(String.fromCharCode(10));
 }
+
 function splitBlocks(text) {
   const out = [];
   let rest = text, inBlock = false;
