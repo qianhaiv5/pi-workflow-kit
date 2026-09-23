@@ -1,0 +1,4 @@
+# 跨主机一致：文本一律 LF
+* text=auto eol=lf
+*.png binary
+*.exe binary
