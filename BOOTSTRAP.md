@@ -140,6 +140,7 @@ node ~/.pi/agent/bin/push-assert.mjs
 | `~/.pi/agent/npm/package.json` 少于 5 项 | pi 自动补装**静默漏包**（实测漏 collab） | 逐个 `pi install npm:<包>`，再跑门 1 |
 | `pi update` 报 `ENOSPC` / `ERR_MODULE_NOT_FOUND: node_modules/<依赖>` | C 盘满导致的**半解压**（不是版本回归） | 清盘后 `npm install -g --ignore-scripts @earendil-works/pi-coding-agent@<目标版本>` 重装；删 npm 残骸 `.pi-*`（运行中的 pi 会锁 `.node`，重启后再删） |
 | `git clone/push` 连不上 github | 网络瞬断 | `push-assert` 已内建重试（5s/10s ×3）；clone 失败就重试或换镜像/代理 |
+| 机器路径解析异常（找不到项目/仓） | `bin/machine-paths.mjs` 三级解析 | 跑自验 `node ~/.pi/agent/bin/machine-paths.mjs --self-test`（8/8）；仍不对就用 `PATCH_PROJECT_DIR` / `PUSH_ASSERT_REPOS` / `bin/push-repos.json` 显式指定 |
 | 非 Windows 主机 | 平台的差异清单 | `bin/*.exe`（rg/fd/rtk/pi.exe）无用于该机 ⇒ 用系统 rg/fd；脚本已支持 `PI_CLI_JS` 指定 cli.js；`.gdmcp` 用 `install.sh` 版；`MSYS_NO_PATHCONV` 无需设置 |
 | 想在临时目录试 pi（不污染真机） | 沙箱 | `PI_CODING_AGENT_DIR=<临时目录> pi …`；⚠️ 但 `apply-collab-patches.mjs` 写死 `os.homedir()`，要用 `USERPROFILE`/`HOME` 覆盖才能真正沙箱化 |
 
