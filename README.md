@@ -119,3 +119,13 @@ host=github.com
 - **凭据**（`~/.pi/agent/auth.json`）、**扩展本体**（`npm/`）、**会话与协作运行态**（`sessions/`、`collaborating-agents/`）：不入库，按 BOOTSTRAP STEP 1 重装/重登录。
 - **项目内容**（代码/素材/数据）与**历史交付报告**（`.pi/designs/*.md`）：属旧项目，本 kit 只给 `designs-README.md` 的索引模板。
 - **引擎二进制**（`.gdmcp/`、Godot exe）：可再生工具链，新机自行安装。
+
+## 引擎块换代记录
+
+### 2026-09-26 · `packs/godot/AGENTS.engine.md` 的 E5–E7（由《田园里的苗族少女》`ADR-002` 实践回灌）
+
+- **改前**：E5「SubViewport 点击一律走 GUI 转发」· E6「手势用 Node 级 `_input()` + 自身 rect」· E7「视角控制为独立输入域，且与**手机态**模态互斥」—— 三条都写成**通用红线**。
+- **为什么改**：① 命中载体是**实现选型**，应交给项目 ADR（真 GUI / SubViewport 转发 / 3D 射线都合法，**禁混用**），而不是由 kit 单点拍定；② 「手机态 / 观览态」是**一套具体产品形态**，当通用红线会强迫新项目实现一套它可能根本不需要的模态。
+- **改后**：改为**原则 + 条件式 + 选型留白**；硬-won 机理**全部保留**（成对 `push_input` / 全类型唯一转发入口 / motion 在 SubViewport GUI 不冒泡 / 模态泄漏三件事 / 拖拽与点击同一硬阈值）。
+- **旧条文**：见 git 历史（`a487c82` 及以前）。
+- ⚠️ **尚未跑牙口**：本机 `tools/kit-teeth.mjs` **不存在**（远端 README 已列该文件 ⇒ **本地 kit 落后于远端**）。网络恢复后应先 `git fetch && git rebase origin/main` 再跑牙口；本次换代以「逐条手工核对 + 保留硬-won 机理」替代。

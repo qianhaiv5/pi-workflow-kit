@@ -8,9 +8,11 @@
 | E2 | **project.godot 枚举用整数值**（`mode=2` 非 `=viewport`） |
 | E3 | **UID 由 Godot 自动生成**，不手写 `uid://` |
 | E4 | **C# 编译必过**：`.cs` 变更后 `dotnet build` 零错误 |
-| E5 | **SubViewport 点击交互一律走 GUI 转发，禁止坐标命中分支**：SubViewport 内左键 press+release 成对 `push_input`，主页图标/APP 内控件都是真实 Button 走 GUI。双路径会分裂 press/release 语义导致按钮点不响。转发必须全类型（LEFT/WHEEL/motion 拖动）走唯一入口 `_forward_event_to_viewport` |
-| E6 | **手势类输入（滚动/拖动/长按）用 Node 级 `_input()` + 自身 rect 判定，禁止依赖 `_gui_input` 冒泡**：子控件（Button `mouse_filter=STOP`）会吃掉 press，motion 在 SubViewport GUI 不冒泡（实测）。参考 `scroll_pager.gd`。点击类（Button 等）仍走 GUI |
-| E7 | **视角控制为独立输入域，且与手机态模态互斥**：全景 yaw/pitch 拖拽 + WHEEL 用 Node 级 `_input()` + 自身全屏 rect（同 E6），**禁止 push_input、禁止 SubViewportContainer、禁止坐标命中分支**；ESC 走 `_unhandled_input`。**模态互斥铁律**：观览态与手机态任一时刻恰有一态——观览态禁止任何可见可点 Control，手机态禁止全景接收输入。**进观览态必须显式冻结手机输入（三件事缺一不可）**：`set_process_input(false)` + `set_process_unhandled_input(false)` **+ 悬挂 `_process` 中的悬停转换**，退出全部恢复 |
+| E5 | **交互命中：三种载体任选其一（选型由项目 ADR 定），禁「双路径混用」，禁把 2D 叠加层当 3D 命中层**：① 纯 2D 场景直接用 `Control` 树 / 真 GUI；② **若** UI 承载在 `SubViewport` 内 ⇒ 左键 press+release **成对** `push_input`，且 LEFT/WHEEL/motion **全类型走唯一转发入口**（双路径会分裂 press/release 语义 ⇒ 按钮点不响）；③ **3D 世界** ⇒ 射线命中（`camera.project_ray_origin/normal` + `PhysicsDirectSpaceState3D.intersect_ray`）。**禁**用「2D `Control` 叠加层」当 3D 世界的热点命中层 |
+| E6 | **拖拽与点击由同一条硬阈值区分；禁依赖 GUI 控件的拖拽事件**：手势/视角拖拽走 Node 级 `_input()` / `_unhandled_input()` + 自身 rect 判定 —— 子控件（`mouse_filter=STOP`）会吃掉 press，motion 在 `SubViewport` GUI **不冒泡**（实测）；「按住拖拽 = 拖」与「点击 = 交互」由同一条**位移/时间阈值**判定（**阈值数值属项目待定项，禁自创**） |
+| E7 | **单动作互斥**：同一时刻只允许一个「动作」在进行。**若**项目采用模态态（如「观览态 / 手机态」）⇒ 任一时刻**恰有一态**，且进入受限态必须**显式冻结**上一态输入 —— `set_process_input(false)` ＋ `set_process_unhandled_input(false)` ＋ **悬挂 `_process` 中的悬停转换**（三者缺一不可，漏一处即泄漏，实测）；退出时全部恢复。**无论是否模态**：交互进行中视角仍应可自由拖拽（否则造出「点一下等三秒」的陷阱） |
+
+> **E5–E7 换代说明（2026-09-26 · 由《田园里的苗族少女》`ADR-002` 实践回灌）**：本 kit 旧版把「SubViewport GUI 转发」与「观览态/手机态**模态互斥**」写成**通用红线**。实践修正两点：① **命中载体应由项目 ADR 选型**（真 GUI / SubViewport 转发 / 3D 射线都合法，**禁混用**）；② **「手机态 / 观览态」是一套具体产品形态，不是通用红线** —— 当默认会强迫新项目实现一套它可能不需要的模态。⇒ 现版改为「**原则 + 条件式 + 选型留白**」，硬-won 机理（成对 push_input / 全类型唯一入口 / motion 不冒泡 / 模态泄漏三件事）**全部保留**。旧条文见 git 历史（`a487c82` 及以前）。
 | E8 | **一个逻辑编辑器**：Mono 版是 `Godot_*_console.exe`（启动器）+ `Godot_*win64.exe`（真编辑器）两进程、参数相同 ⇒ 判重复要按 `--path/--editor` **参数去重后数**，进程数 2 是正常的 1 个；真重复 = 两组同参数进程 |
 
 <!-- redlines:end -->
