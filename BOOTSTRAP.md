@@ -158,3 +158,12 @@ node ~/.pi/agent/bin/push-assert.mjs
 - `~/.pi/agent/docs/pi-版本与配置二分诊断.md` —— 模式 A/B 二分法
 - `~/.pi/agent/AGENTS.md` —— 工作流记忆（本机 pi 的行为约定）
 - **工具箱仓**：https://github.com/qianhaiv5/pi-workflow-kit （本文件所在仓；`README.md` 讲结构与维护）
+
+## ⚠️ 新主机：先设 `KIT_SRC`（否则 `kit-teeth` 的 TC30 无源可校）
+
+`tools/extract-kit.mjs` 的**默认源是源机路径**（`D:/MyGame_journey`）。换机/换项目后：
+
+```bash
+export KIT_SRC=<跑着的项目根>        # 例：F:/Home_She_Grows
+node ~/.pi/agent/kit/tools/kit-teeth.mjs   # TC30 才有源可校；未设 ⇒ 如实 SKIP（非 FAIL）
+```

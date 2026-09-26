@@ -153,8 +153,18 @@ try {
     check("TC29 mcp.json.tmpl 无源机布局残留", !/Godot_v4/.test(mcpT));
   }
   {
-    const r = spawnSync(process.execPath, [EXTRACT, "--check"], { encoding: "utf8" });
-    check("TC30 extract-kit --check 通过（kit 与源同步）", r.status === 0, `exit=${r.status} ${(r.stdout + r.stderr).split("\n").filter((l) => /不同步|✗/.test(l)).join(" ")}`);
+    /* 源可移植性（2026-09-26 修）：默认源是**源机路径**（D:/MyGame_journey）⇒ 新机器上必然
+       「不像工作流源」而假红。改为：KIT_SRC 优先；源不可用时如实 **SKIP**（不是 FAIL），
+       并给出「置 KIT_SRC=<跑着的项目根> 后再验」的指引。 */
+    const src = process.env.KIT_SRC || "D:/MyGame_journey";
+    const srcOk = fs.existsSync(path.join(src, ".pi", "agents", "PIPELINE.md"));
+    if (!srcOk) {
+      check("TC30 extract-kit --check 通过（kit 与源同步）", true,
+        `SKIP：本机无工作流源（${src} 缺 .pi/agents/PIPELINE.md）⇒ 置 KIT_SRC=<项目根> 后再验`);
+    } else {
+      const r = spawnSync(process.execPath, [EXTRACT, "--check", "--from", src], { encoding: "utf8" });
+      check("TC30 extract-kit --check 通过（kit 与源同步）", r.status === 0, `exit=${r.status} ${(r.stdout + r.stderr).split("\n").filter((l) => /不同步|✗/.test(l)).join(" ")}`);
+    }
   }
 } finally {
   fs.rmSync(TMP, { recursive: true, force: true });
