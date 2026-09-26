@@ -88,3 +88,12 @@ grep -i "topic" "{{GODOT_DOCS_DIR}}/Godot Engine 4.7 documentation in English MD
 3. 描述部分（Description）最有价值 — MCP 不给这部分
 4. 代码示例通常在方法描述的段落中
 5. 文档是英文的，类名和方法名保持原样
+
+
+---
+
+## 上游实战增补（2026-09-26 回灌 · 每条都带判据）
+### 新素材落地三查
+- ① **位置**（按惯例目录）② **命名**（英文 + 帧号两位）③ **`.import` 已生成**
+  （`godot --headless --import`，否则运行时 `No loader found`）。
+- 素材契约要**明示格式**（如「只收 `.webp`」），否则会在压缩/替换批里反复踩。

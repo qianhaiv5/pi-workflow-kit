@@ -80,3 +80,11 @@ Rules:
 - Configure tokens via `GODOT_MCP_TOKEN` environment variable; never print them.
 
 See `references/command-workflows.md` for copyable task flows.
+
+
+---
+
+## 上游实战增补（2026-09-26 回灌 · 每条都带判据）
+### 写回可能损伤多字节字符
+- CLI **全量写回**在 TCP 块边界可能**确定性损伤多字节字符**（上游实测）⇒ **写回后必须 `git diff` 抽查非 ASCII 段**。
+- 新文件一律 **UTF-8 无 BOM**；`.gd` 改动后复读确认（编辑器可能写回旧版）。

@@ -102,3 +102,19 @@ flag it for `/game-architecture-review`.
 **Then ask: what would have prevented this bug?** If it's architectural
 (signal never connected, missing null check on cross-scene reference,
 autoload initialization order), hand off to `/game-architecture-review`.
+
+
+---
+
+## 上游实战增补（2026-09-26 回灌 · 每条都带判据）
+### `autowrap` Label 的隐藏期布局爆炸
+- `autowrap` Label 在 `hidden` 期**布局会爆炸**（min-height 虚高）⇒ **判可见性/尺寸禁在隐藏期采样**；
+  布局数值必须在**可见期**实测（上游真因：详情页白板 / 事件页按钮失效）。
+
+### 吞点击族（本引擎高频根因）
+- 全屏 / 隐藏 `Control` 会**沿父链吞掉点击**（`mouse_filter` 默认 `STOP`）⇒ 新增 UI 后必须清点根节点 `mouse_filter`；
+  诊断路径：先问「**谁吃掉了事件**」再查「被点的控件为什么没响应」。上游同族 5+ 次（相机快门死区 / 桌角二维码 / 图标点不响）。
+
+### `Node.name` 遮蔽符号 ⇒ 静默解析
+- `Node.name` 可能与脚本符号**同名** ⇒ 静默解析成**错对象**（不报错）；
+  场景/资源绑定必须以**数据语义**为准，**禁把「名字像」当绑定**。
