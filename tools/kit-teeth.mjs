@@ -160,7 +160,7 @@ try {
     const srcOk = fs.existsSync(path.join(src, ".pi", "agents", "PIPELINE.md"));
     if (!srcOk) {
       check("TC30 extract-kit --check 通过（kit 与源同步）", true,
-        `SKIP：本机无工作流源（${src} 缺 .pi/agents/PIPELINE.md）⇒ 置 KIT_SRC=<项目根> 后再验`);
+        `SKIP：本机无源项目（${src} 缺 .pi/agents/PIPELINE.md）⇒ 置 KIT_SRC=<源项目根（kit 抽取来源）> 后再验`);
     } else {
       const r = spawnSync(process.execPath, [EXTRACT, "--check", "--from", src], { encoding: "utf8" });
       check("TC30 extract-kit --check 通过（kit 与源同步）", r.status === 0, `exit=${r.status} ${(r.stdout + r.stderr).split("\n").filter((l) => /不同步|✗/.test(l)).join(" ")}`);

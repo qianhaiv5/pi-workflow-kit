@@ -161,9 +161,9 @@ node ~/.pi/agent/bin/push-assert.mjs
 
 ## ⚠️ 新主机：先设 `KIT_SRC`（否则 `kit-teeth` 的 TC30 无源可校）
 
-`tools/extract-kit.mjs` 的**默认源是源机路径**（`D:/MyGame_journey`）。换机/换项目后：
+`tools/extract-kit.mjs` 的**默认源是源机路径**（`D:/MyGame_journey`）⇒ 换机后「无源可校」是**预期**的：TC30 会如实打印 **SKIP**（不是 FAIL）。要真的校验，把 `KIT_SRC` 指向**源项目**：
 
 ```bash
-export KIT_SRC=<跑着的项目根>        # 例：F:/Home_She_Grows
+export KIT_SRC=<**源项目**根>     # = kit 被抽取的那个项目（如 D:/MyGame_journey）；**不是**消费方项目
 node ~/.pi/agent/kit/tools/kit-teeth.mjs   # TC30 才有源可校；未设 ⇒ 如实 SKIP（非 FAIL）
 ```
