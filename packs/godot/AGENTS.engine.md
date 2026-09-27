@@ -35,7 +35,9 @@
 <!-- godot-cli-rule:start -->
 # Godot CLI-Only Rule
 
-ALL Godot operations via `gdmcp` CLI or MCP. NEVER directly edit `.tscn`, `.tres`, `.gd`, or `.cs` on disk.
+ALL Godot operations via `gdmcp` CLI or MCP. NEVER directly edit `.tscn`, `.tres`, or `.gd` on disk.
+`.cs` is plain text source: `write`/`edit` **is** allowed, but it must pass the compiler (`dotnet build` zero errors).
+（2026-09-27 拍板：`.cs` 通道以**项目宪法 E1** 为准 —— 原「NEVER … `.cs`」表述作废）
 
 **CLI:** `MSYS_NO_PATHCONV=1 ./.gdmcp/bin/gdmcp.exe --json <command>`
 **MCP:** `mcp({ server: "godot-mcp-native", tool: "..." })`
