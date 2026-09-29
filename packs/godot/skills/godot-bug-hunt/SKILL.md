@@ -103,7 +103,6 @@ flag it for `/game-architecture-review`.
 (signal never connected, missing null check on cross-scene reference,
 autoload initialization order), hand off to `/game-architecture-review`.
 
-
 ---
 
 ## 上游实战增补（2026-09-26 回灌 · 每条都带判据）

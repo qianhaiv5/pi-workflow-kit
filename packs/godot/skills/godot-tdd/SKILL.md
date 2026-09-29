@@ -116,7 +116,6 @@ public void TakeDamage_FatalDamage_TriggersDeath()
 }
 ```
 
-
 ---
 
 ## 上游实战增补（2026-09-26 回灌 · 每条都带判据）
