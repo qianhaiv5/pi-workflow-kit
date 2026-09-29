@@ -194,6 +194,25 @@ function applyPackWords(text) {
   return x;
 }
 
+
+/* ── pack 行级「变体声明」补记（2026-09-29 · TC31 清偿）─────────────────
+   动机：pack 模板里的 runner/框架**prose 提及**（GUT / xUnit / dotnet）对不使用它们的消费方是误导。
+   做法：**在派生层**对「含词表命中且无变体/示例/占位语境」的行**行尾追加一次性标记**（幂等：
+   下一次派生时该行已含「变体」⇒ 不再追加）。⇒ 源项目自身配置**零污染**（这正是 pack 是派生物的意义）。
+   标记形态：toml/ini/sh ⇒ `# …`；其它（md 等）⇒ `<!-- … -->`。 */
+const PV_RUN = /(run_gut\.ps1|run_tests\.gd|xunit|\bGUT\b|\bdotnet\b)/i;
+const PV_OK = /(\{\{|变体|示例|仅为示例|占位)/;
+const PV_TAG = "变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制）";
+function applyPackVariants(dstRel, text) {
+  const lineComment = /\.(toml|ini|sh)(\.tmpl)?$/.test(dstRel);
+  const tag = lineComment ? ("   # " + PV_TAG) : ("   <!-- " + PV_TAG + " -->");
+  return text.split("\n").map(function (l) {
+    if (!PV_RUN.test(l)) return l;
+    if (PV_OK.test(l)) return l;
+    return l + tag;
+  }).join("\n");
+}
+
 /* ── ④ 区段标记规则（按文本锚点，不按行号） ─────────────────────── */
 const MARKERS = [
   { dst: "core/agents/PIPELINE.md.tmpl", pack: "godot",
@@ -298,7 +317,10 @@ function transform(dstRel, raw) {
     text = text.replace(r.re, r.to);
   }
   if (dstRel.startsWith("core/")) text = applyCoreWords(text);
-  if (dstRel.startsWith("packs/")) text = applyPackWords(text);   /* TC31：pack 命令形态占位化 */
+  if (dstRel.startsWith("packs/")) {
+    text = applyPackWords(text);                                   /* TC31：pack 命令形态占位化 */
+    text = applyPackVariants(dstRel, text);                        /* TC31：prose 提及行级变体标记（幂等） */
+  }
   // 行尾统一 LF：kit 是跨平台分发物，源项目里可能混 CRLF（外部技能包/手写文件）⇒ 不统一会与 --check 假漂移
   return text.split(String.fromCharCode(13) + String.fromCharCode(10)).join(String.fromCharCode(10));
 }

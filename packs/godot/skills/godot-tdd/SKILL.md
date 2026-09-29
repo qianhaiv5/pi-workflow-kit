@@ -1,8 +1,8 @@
 ---
 name: godot-tdd
 description: >
-  Test-driven development for Godot. Red-green-refactor loop adapted for GDScript (e.g. GUT)
-  and C# (e.g. xUnit/NUnit). Use when building features or fixing bugs test-first, or when
+  Test-driven development for Godot. Red-green-refactor loop adapted for GDScript (e.g. GUT)   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
+  and C# (e.g. xUnit/NUnit). Use when building features or fixing bugs test-first, or when   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
   the user mentions "TDD", "test-first", or "red-green-refactor".
 ---
 
@@ -54,7 +54,7 @@ A **seam** in Godot is where you can observe behavior without reaching inside:
 | **Signal emission** | `signal item_collected(id)` | `await` signal, verify parameters |
 | **Exported variable** | `@export var max_health: int` | Set in test, read back |
 | **Scene boundary** | Autoload -> Scene | Test autoload independently, mock in scene |
-| **C# ↔ GDScript** | C# model → GDScript UI | Test C# logic in xUnit, test GDScript binding in GUT |
+| **C# ↔ GDScript** | C# model → GDScript UI | Test C# logic in xUnit, test GDScript binding in GUT |   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 
 **Test only at pre-agreed seams.** Before writing any test, confirm with the user:
 "Which seams should we test?" Not everything needs a test — focus on critical paths
@@ -64,21 +64,21 @@ and complex logic.
 
 - **Red before green.** Write the failing test, watch it fail, then write minimum code.
 - **One slice at a time.** One seam, one test, one implementation per cycle.
-- **For C# models:** test in xUnit first, then wire into Godot.
-- **For GDScript scenes:** use `autoqfree(MyScene.instantiate())` pattern in GUT.
+- **For C# models:** test in xUnit first, then wire into Godot.   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
+- **For GDScript scenes:** use `autoqfree(MyScene.instantiate())` pattern in GUT.   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 - **Refactoring is not part of the loop.** Refactor after the feature works, during code review.
 
 ## Mixed-strategy testing
 
 With the GDScript/C# hybrid approach:
 
-1. **C# data models** → xUnit unit tests (fast, independent of Godot)
-2. **C# game logic** → xUnit integration tests (load GameState, manipulate, verify)
-3. **GDScript UI scripts** → GUT scene tests (instantiate scene, simulate input, check signals)
+1. **C# data models** → xUnit unit tests (fast, independent of Godot)   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
+2. **C# game logic** → xUnit integration tests (load GameState, manipulate, verify)   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
+3. **GDScript UI scripts** → GUT scene tests (instantiate scene, simulate input, check signals)   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 4. **Autoload services** → Test in isolation; mock their signals in scene tests
 5. **End-to-end** → Run the game via MCP `run_project`, use `execute_editor_script` to probe state
 
-## GUT quick reference
+## GUT quick reference   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 
 ```gdscript
 extends GutTest
@@ -97,7 +97,7 @@ func test_death_signal_on_zero_health():
     assert_signal_emitted(player, "died")
 ```
 
-## xUnit quick reference (for C# models)
+## xUnit quick reference (for C# models)   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 
 ```csharp
 [Fact]

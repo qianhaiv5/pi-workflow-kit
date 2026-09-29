@@ -4,7 +4,7 @@ description: >
   Godot 项目安全重构三步法：门面保名兼容 → 每步独立验证 → 偏差显式记录。
   针对"上帝对象拆分、核心系统重构、autoload 迁移"等高风险改动，保证行为不变、
   测试零改动、存档契约零风险。源自 ADR-002 GameState 拆分执行范式（2026-08-10
-  实战验证：1771 行→555 行，GUT 290/290 全程零破坏）。
+  实战验证：1771 行→555 行，GUT 290/290 全程零破坏）。   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 disable-model-invocation: true
 ---
 
@@ -27,7 +27,7 @@ Godot 游戏项目里重构核心系统（GameState/autoload/存档）时，最�
 2. **序列化数据不迁移**：存档字段（to_dict/from_dict 涉及的一切 var）留原容器；模块只持运行时态（`_` 前缀非序列化 var）——存档契约（S12）零风险
 3. **拆了必须接线**：新模块必须当次任务被驱动（autoload 注册 / 容器持有 / 被调用），否则变死代码（本项目 5 死代码全部是"拆了没接线"）
 4. **禁止整文件重写**：大文件用 MCP modify_script 单行/分段替换 + execute_editor_script 块删除；重写丢成员声明是历史教训（RadioDot 事故）
-5. **每步独立提交**：每步完成 = validate + 全量 GUT + 门禁，全绿才进下一步
+5. **每步独立提交**：每步完成 = validate + 全量 GUT + 门禁，全绿才进下一步   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 
 ## 三步法流程
 
@@ -37,7 +37,7 @@ Godot 游戏项目里重构核心系统（GameState/autoload/存档）时，最�
 # 全量回归确认当前是绿的（这是你的安全网）
 # ⚠️ fresh clone / 新机器先 --import 生成 global_script_class_cache（class_name 注册仅来自 editor scan；headless -s 不扫描，缺缓存 → PanelUtils 等依赖面板测试 Parse Error）
 godot --headless --path . --import
-godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit
+godot --headless --path . -s addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 python tools/check_health.py          # 健康门禁基线
 git commit -m "baseline"              # 可回滚锚点
 ```
@@ -76,9 +76,9 @@ func check_credit_status() -> void: _credit_svc.check_credit_status()
 
 ```bash
 python tools/check_health.py                     # 依赖/死代码/BOM 全绿
-godot --headless ... -gexit                      # GUT 全量（必须=基线数量）
+godot --headless ... -gexit                      # GUT 全量（必须=基线数量）   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 grep -rn "旧路径" --include="*.gd" .             # 旧引用全仓归零
-dotnet build                                     # C# 0 错 0 警
+dotnet build                                     # C# 0 错 0 警   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 ```
 
 - 写 ADR（背景/选项/决策/后果/回滚/验证）
@@ -100,18 +100,18 @@ dotnet build                                     # C# 0 错 0 警
 
 ## 验证清单（DoD）
 
-- [ ] 基线 GUT 数量 == 重构后 GUT 数量（零新增零减少，测试零改动）
+- [ ] 基线 GUT 数量 == 重构后 GUT 数量（零新增零减少，测试零改动）   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 - [ ] 门面保名清单 == grep 出的外部调用面（不漏一个）
 - [ ] 旧函数/旧路径全仓 grep 零残留
 - [ ] check_health.py 全绿
 - [ ] 新模块接线证明（autoload 注册行 / 容器持有行 / 被调用点）
 - [ ] ADR 归档（含回滚步骤 + 偏差记录）
-- [ ] dotnet build 0 错（如有 .cs）
+- [ ] dotnet build 0 错（如有 .cs）   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 
 ## 案例实录（ADR-002 GameState 拆分，2026-08-10）
 
 - 起点：game_state.gd 1771 行（8.9× 超限，宪法 ≤200）
 - 拆分：date_utils(73) + credit_service(235) + video_engine(291) + social_engine(704)
-- 终点：555 行（容器≤600 达标），GUT 290/290 全程零破坏，测试零改动，存档 73-key 扁平原样
+- 终点：555 行（容器≤600 达标），GUT 290/290 全程零破坏，测试零改动，存档 73-key 扁平原样   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 - 偏差 3 处已记录：maybe_settle_credit 第 5 门面 / class_name 移除（与 autoload 同名冲突）/ 被直戳运行时态留容器
 - 完整细节：docs/任务管理/GameState拆分迁移工单.md + docs/架构设计/ADR/ADR-002-GameState职责拆分.md

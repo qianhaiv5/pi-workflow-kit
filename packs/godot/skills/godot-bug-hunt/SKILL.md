@@ -18,7 +18,7 @@ signal for the bug — one that goes red on THIS bug — you will find the cause
 
 ### Godot-specific feedback loops (try in this order)
 
-1. **GUT test** — Write a failing test that reproduces the exact symptom.
+1. **GUT test** — Write a failing test that reproduces the exact symptom.   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
    Use `godot-tdd` skill for guidance.
 
 2. **MCP `execute_editor_script`** — Run GDScript directly in the editor context
@@ -34,7 +34,7 @@ signal for the bug — one that goes red on THIS bug — you will find the cause
    run it standalone.
 
 6. **C# unit test** (for C# logic) — Extract the buggy logic into a pure C# method,
-   test with xUnit outside Godot.
+   test with xUnit outside Godot.   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
 
 ### Tighten the loop
 
