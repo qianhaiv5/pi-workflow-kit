@@ -154,7 +154,8 @@ node ~/.pi/agent/bin/push-assert.mjs
 ## §REF · 相关文档
 
 - `~/.pi/agent/docs/迁移到新主机.md` —— 迁移决策/资产分层/验证证据（本文件的详版）
-- `~/.pi/agent/docs/collab-扩展本地补丁.md` —— 十枚补丁逐枚说明 + 牙口用法
+- `~/.pi/agent/docs/子代理存活与取证-资产沉淀-2026-09-29.md` —— **子代理「又死了/卡了/回传丢了」的唯一入口**（症状→根因→措施主表 · 三十秒体检 · 派单/取证纪律 · 环境三坑）
+- `~/.pi/agent/docs/collab-扩展本地补丁.md` —— 十一枚补丁逐枚说明 + 牙口用法（详版；资产沉淀页为其索引）
 - `~/.pi/agent/docs/pi-版本与配置二分诊断.md` —— 模式 A/B 二分法
 - `~/.pi/agent/AGENTS.md` —— 工作流记忆（本机 pi 的行为约定）
 - **工具箱仓**：https://github.com/qianhaiv5/pi-workflow-kit （本文件所在仓；`README.md` 讲结构与维护）
