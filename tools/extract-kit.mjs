@@ -90,7 +90,7 @@ const PATCHES = [
     from: "| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | deepseek-flash (high) | game-architecture-review, godot-tdd | 定期巡检/关键节点评审/复盘治理（按需） |",
     to: "| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | {{MODEL_HIGH}} | game-architecture-review | 定期巡检/关键节点评审/复盘治理（按需） |" },
   { dst: "core/agents/PIPELINE.md.tmpl",
-    from: "**成本账（口径：以最近一次全量实测为准）**：全量 = **171 脚本 / 1884 用例 ≈ 160–213 s**；单模块 `-gselect` ≈ **5–20 s**。\n> 出处：`.pi/designs/巡检报告-2026-09-23-夜.md` §三（2026-09-23 12:35Z Coordinator 全量实测 171 脚本 / 1884 用例 / Failing 0）。\n> ⚠️ 脚本/用例数**随批次增长**（历史：2026-09-18 = 160/1718 ⇒ 09-23 = 171/1884）⇒ **禁把数字当长期不变基线**；要核对现值就跑一次全量并回写本行。\n**工具**：`powershell -File tools/run_gut.ps1 -Files <测试文件>`（定向）· `… -Full`（全量，显式）。禁用「先跑全量看看」。",
+    re: "^\\*\\*成本账（口径：以最近一次全量实测为准）\\*\\*：.*$", flags: "m",
     to: "**成本账（口径：以最近一次全量实测为准）**：源项目实测 全量 ≈ **160–213 s**；单模块定向 ≈ **5–20 s**（新项目首次全量后回写本行）。\n> ⚠️ 脚本/用例数**随批次增长** ⇒ **禁把数字当长期不变基线**；要核对现值就跑一次全量并回写本行。\n**工具**：测试入口分「定向」与「全量」两个显式命令（具体命令由 pack 提供，禁用「先跑全量看看」）。" },
   { dst: "core/agents/PIPELINE.md.tmpl",
     from: "- **质量防线** — 测试全量回归 + 脚本 validate + dotnet build 门禁 + **`python tools/check_health.py` 健康门禁（每次提交 pre-commit 自动跑，见 docs/架构设计/质量门禁规范.md）**",
@@ -261,6 +261,14 @@ log(`kit = ${KIT}${CHECK ? "（--check 只比对不写盘）" : ""}`);
 function transform(dstRel, raw) {
   let text = insertMarkers(dstRel, raw);
   for (const p of PATCHES.filter((p) => p.dst === dstRel)) {
+    /* A2（2026-09-29）：支持 `re`（正则锚）—— 数字/行列不稳的段落改用它，避免「源一变即未命中」。
+       约定：`{ dst, re: "<regex 源>", flags?: "m", to }`；`re` 与 `from` 二选一。 */
+    if (p.re) {
+      const rx = new RegExp(p.re, p.flags ?? "");
+      if (!rx.test(text)) { errs.push(`结构化改写未命中（regex）：${dstRel} ← /${String(p.re).slice(0, 60)}/（源文档变了？同步改 extract-kit.mjs 的 PATCHES）`); continue; }
+      text = text.replace(rx, p.to);
+      continue;
+    }
     if (!text.includes(p.from)) { errs.push(`结构化改写未命中：${dstRel} ← "${p.from.slice(0, 50)}…"（源文档变了？同步改 extract-kit.mjs 的 PATCHES）`); continue; }
     text = text.split(p.from).join(p.to);
   }

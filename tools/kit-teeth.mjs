@@ -156,6 +156,26 @@ try {
     check("TC29 mcp.json.tmpl 无源机布局残留", !/Godot_v4/.test(mcpT));
   }
   {
+    /* TC31（2026-09-29 立 · 对方项目实证的污染链）：
+       模板/文档里出现的**具体 runner / 工具名**必须落在「变体块 / 占位符 / 示例」语境内；
+       裸着写 ⇒ 消费方照抄即错（纯 GDScript 项目会被塞进 GUT/xUnit/run_gut.ps1）。
+       注：本条**故意**在收敛完成前保持 FAIL —— 见 KIT-GOVERNANCE §3「SKIP/红不得掩饰」。 */
+    const RUNNER_RE = /(run_gut\.ps1|run_tests\.gd|xunit|\bGUT\b|\bdotnet\b)/;
+    const OK_CTX = /(\{\{|变体|示例|仅为示例|占位)/;
+    const hits = [];
+    for (const f of walk(path.join(KIT, "packs"))) {
+      if (!/\.(tmpl|md|toml|json|sh)$/.test(f)) continue;
+      const lines = fs.readFileSync(f, "utf8").split("\n");
+      lines.forEach((l, i) => {
+        if (!RUNNER_RE.test(l)) return;
+        if (OK_CTX.test(l)) return;
+        hits.push(`${path.relative(KIT, f).replace(/\\/g, "/")}:${i + 1}`);
+      });
+    }
+    check("TC31 模板内 runner/工具具体名必须落在变体块/占位符/示例内", hits.length === 0,
+      hits.length ? `${hits.length} 处裸名：${hits.slice(0, 8).join(" | ")}${hits.length > 8 ? " …" : ""}` : "");
+  }
+  {
     /* 源可移植性（2026-09-26 修）：默认源是**源机路径**（D:/MyGame_journey）⇒ 新机器上必然
        「不像工作流源」而假红。改为：KIT_SRC 优先；源不可用时如实 **SKIP**（不是 FAIL），
        并给出「置 KIT_SRC=<跑着的项目根> 后再验」的指引。 */
