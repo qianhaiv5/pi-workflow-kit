@@ -149,6 +149,24 @@ grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include
 
 ---
 
+
+### 5.3 · 方向表判据：独有行**四分类**（2026-09-29 对方自我更正 + 机械化）
+
+> **教训**：方向表**禁只按 diff 行数判** —— 行数只是「形状指标」，不是「语义结论」（与既有教训同族：形状指标 ≠ 语义结论）。
+
+**每个文件的「独有行」必须逐条归类**，只有 **④** 才有资格进入「谁领先」裁决：
+
+| 类 | 含义 | 处置 |
+|---|---|---|
+| **①** | **模板 ↔ 实例**的正常派生差异（例：kit 侧 `{{GODOT_DOCS_DIR}}` vs 源侧 `D:/Godot4.7/…`） | **不算漂移**，由 `extract-kit` 的 transform 处理；方向表须把这部分**剔除后再判** |
+| **②** | **宿主路径**（具体用户名/盘符/安装路径） | 须**占位化**（§5.1 两档判据 / 反例 F） |
+| **③** | **L3 项目专属**（本项目才成立的实况，例：「本项目走自研 `run_tests.gd`，不引 GUT、无 C#」） | **留在项目，不上行** |
+| **④** | **真通用改进**（带判据、换项目也成立） | **才有资格进方向裁决**（① kit 独有 ⇒ 回流源侧；② 源侧独有 ⇒ 重生成；③ 双方各自独有 ⇒ 人工合并） |
+
+**本批实证**（4 skills）：按行数初步判「③ 双方各自独有」⇒ 逐条看内容后**推翻**为「① kit 独有」（因为对方侧那 8 行全是本机文档路径 = ① 模板↔实例；另 2 行是 ③ L3 实况注）⇒ **结论：以逐条归类为准，不以行数为准**。
+
+---
+
 ## 6 · 附录 A · 2026-09-29 收敛清单（**待各自拍板，未采纳**）
 
 > 数据来源：`extract-kit --check`（9 文件不同步）+ 双方逐文件行数/差异比对（2026-09-29 实测）。
@@ -165,7 +183,7 @@ grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include
 | 7 | `skills/godot-bug-hunt/SKILL.md` | 120/104 | 16 | kit 领先 | **L2（待 L3 复筛）** | 同上 | 待评估 |
 | 8 | `skills/godot-docs/SKILL.md` | 99/90 | 17 | kit 领先 | **L2（待 L3 复筛）** | 同上（含 `{{GODOT_DOCS_DIR}}` 占位） | 待评估 |
 | 9 | `skills/godot-tdd/SKILL.md` | 133/117 | 16 | kit 领先 | **L2（待 L3 复筛）** | 对方项目**明令不引 GUT** ⇒ 该文件含 GUT/xUnit 正文，必须逐句筛（§2 变体声明制） | 待评估 |
-| **101** | **方向表（2026-09-29 机械生成 · 零声明）** | — | — | — | — | 方法：`extract-kit` 重生成到**临时副本** ⇒ 逐文件 diff ⇒ 方向由 diff 定（禁「谁声明谁领先」）。**结果**：`gitignore.tmpl` = ② 源侧独有（重生成即可 / 0 vs 2）；**4 个 skills = ① kit 独有**（gdmcp 8 · bug-hunt 16 · docs 9 · tdd 16 ⇒ **重生成会丢，须先回流源侧或让 PATCHES 保留**）；4 个 agents/core 文件 = ③ 双方各自独有（PIPELINE 65/76 · tester 5/9 · systems-maintainer 11/15 · checklist 13/36 ⇒ **人工合并**） | **待执行**（方向表已定；① 类需源侧采纳决策） |
+| **101** | **方向表（2026-09-29 机械生成 · 零声明）** | — | — | — | — | 方法：`extract-kit` 重生成到**临时副本** ⇒ 逐文件 diff ⇒ 方向由 diff 定（禁「谁声明谁领先」）。**结果**：`gitignore.tmpl` = ② 源侧独有（重生成即可 / 0 vs 2）；**4 个 skills = ① kit 独有**（gdmcp 8 · bug-hunt 16 · docs 9 · tdd 16 ⇒ **重生成会丢，须先回流源侧或让 PATCHES 保留**）；4 个 agents/core 文件 = ③ 双方各自独有（PIPELINE 65/76 · tester 5/9 · systems-maintainer 11/15 · checklist 13/36 ⇒ **人工合并**） | **① 类已执行**（2026-09-29：4 skills 回流源侧 ⇒ kit 独有行 8/16/9/16 → **0**；剩余 = 1 空行 cosmetic，收敛写盘时归一）；**③ 类 4 文件待人工合并**；**② 类 gitignore 待重生成** |
 | **11** | **`core/` 混入引擎专属内容（层级击穿）** | — | — | — | **拆两半**：**(a) 必修**=前 3 处占位化（`AGENTS.md` 引擎行 / `.pi/agents/coordinator.toml` 引擎行 / `.pi/agents/designer.toml:2` description 硬写引擎名）⇒ 改 `{{ENGINE}}`/`{{ENGINE_VERSION}}` 由 pack 填；**(b) 豁免规则**=示例语境（如 `grep --include="*.gd"` 的举例）给明确豁免，否则判据恒红（与「判据不得自命中」同族） | 判据：`core/**` 内 `grep -E "gdmcp|Godot|\.tscn|\.tres|\.gd\b|9080"` 命中 ∧ 非豁免语境 ⇒ ❌。**影响面实测（对方）**：core/** 19 行/5 文件，但 `apply-kit --pack none` 后**实际泄漏仅 4 行/3 文件**（PIPELINE.md 的 12 行已被 apply-kit 处理） | **已采纳 · (a) 已执行**（2026-09-29：apply-kit 引擎默认随 pack，`--pack none` 泄漏 3→**0**，牙口 TC33；判据 = `apply-kit --pack none` 产物内 `Godot|gdmcp|.tscn` 命中 = 0）；**(b) 豁免规则已落**（示例语境：`--include=`/`示例`/`例如` ⇒ TC33 豁免；实测 `--pack none` 泄漏 3→0，pass=33） |
 | **10** | **core 全件漂移扫描（缺口）** | — | — | — | — | 原清单只扫 `packs/` 侧 ⇒ **补扫** `core/skills/*` · `core/AGENTS.md.tmpl` · `core/CONTEXT.md.tmpl` · `core/LESSONS.md.tmpl` · `core/designs-README.md` · `core/pi-settings.json`（否则**单向收敛会漏 core**） | **待补扫** |
 
