@@ -128,6 +128,27 @@ grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include
 
 ---
 
+
+### 5.2 · 通则（2026-09-29 · 对方提议 + 我方落牙）：**写入面参数 ⇒ 双向断言**
+
+> **表述（照对方原话）**：凡**写入面参数**（`--target` / `--out` / 截图 path / 任何「产物落哪」的参数）⇒ **落点合法性「前置守卫」** + **产物非空「后置断言」**。
+
+**为什么是「双向」**（反例 G 的普适教训）：落点错了与读空目录**会同时发生** ——
+产物写进不该写的地方（污染共用仓 / 覆盖他人工作树） ∧ 下游检查读的是**空目录** ⇒ **假绿**（看起来通过，实际什么都没验）。
+⇒ 只加前置守卫（拒错落点）不够，**必须**再加一条「产物真的非空且内容正确」的后置断言。
+
+**本仓已落的两半（可照抄）**
+
+| 半 | 实现 | 判据 |
+|---|---|---|
+| **前置守卫** | `apply-kit` 的 `--target` 守卫（拒「目标落在 kit 仓内」+ 非 win32 拒盘符形态） | `exit 2` ∧ **不落盘**（TC32 断之） |
+| **后置断言** | 产物内容断言（例：`--pack none` 产物内不得出现引擎名/`gdmcp`/`.tscn`，且必须出现 `TODO-选引擎`） | 产物文件遍历计数 = 0 泄漏 ∧ 占位在场（TC33 断之） |
+
+**推广清单（新工具/新脚本一律照办）**：`--out` 目录 · 截图/日志落点 · 备份路径 · 缓存目录。
+判据写法：① 落点是否在**允许面内**（不在 kit 仓/全局配置/cwd 兜底）；② 产物**非空**且**关键内容在场**（禁只断「目录存在」）。
+
+---
+
 ## 6 · 附录 A · 2026-09-29 收敛清单（**待各自拍板，未采纳**）
 
 > 数据来源：`extract-kit --check`（9 文件不同步）+ 双方逐文件行数/差异比对（2026-09-29 实测）。
@@ -144,6 +165,7 @@ grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include
 | 7 | `skills/godot-bug-hunt/SKILL.md` | 120/104 | 16 | kit 领先 | **L2（待 L3 复筛）** | 同上 | 待评估 |
 | 8 | `skills/godot-docs/SKILL.md` | 99/90 | 17 | kit 领先 | **L2（待 L3 复筛）** | 同上（含 `{{GODOT_DOCS_DIR}}` 占位） | 待评估 |
 | 9 | `skills/godot-tdd/SKILL.md` | 133/117 | 16 | kit 领先 | **L2（待 L3 复筛）** | 对方项目**明令不引 GUT** ⇒ 该文件含 GUT/xUnit 正文，必须逐句筛（§2 变体声明制） | 待评估 |
+| **101** | **方向表（2026-09-29 机械生成 · 零声明）** | — | — | — | — | 方法：`extract-kit` 重生成到**临时副本** ⇒ 逐文件 diff ⇒ 方向由 diff 定（禁「谁声明谁领先」）。**结果**：`gitignore.tmpl` = ② 源侧独有（重生成即可 / 0 vs 2）；**4 个 skills = ① kit 独有**（gdmcp 8 · bug-hunt 16 · docs 9 · tdd 16 ⇒ **重生成会丢，须先回流源侧或让 PATCHES 保留**）；4 个 agents/core 文件 = ③ 双方各自独有（PIPELINE 65/76 · tester 5/9 · systems-maintainer 11/15 · checklist 13/36 ⇒ **人工合并**） | **待执行**（方向表已定；① 类需源侧采纳决策） |
 | **11** | **`core/` 混入引擎专属内容（层级击穿）** | — | — | — | **拆两半**：**(a) 必修**=前 3 处占位化（`AGENTS.md` 引擎行 / `.pi/agents/coordinator.toml` 引擎行 / `.pi/agents/designer.toml:2` description 硬写引擎名）⇒ 改 `{{ENGINE}}`/`{{ENGINE_VERSION}}` 由 pack 填；**(b) 豁免规则**=示例语境（如 `grep --include="*.gd"` 的举例）给明确豁免，否则判据恒红（与「判据不得自命中」同族） | 判据：`core/**` 内 `grep -E "gdmcp|Godot|\.tscn|\.tres|\.gd\b|9080"` 命中 ∧ 非豁免语境 ⇒ ❌。**影响面实测（对方）**：core/** 19 行/5 文件，但 `apply-kit --pack none` 后**实际泄漏仅 4 行/3 文件**（PIPELINE.md 的 12 行已被 apply-kit 处理） | **已采纳 · (a) 已执行**（2026-09-29：apply-kit 引擎默认随 pack，`--pack none` 泄漏 3→**0**，牙口 TC33；判据 = `apply-kit --pack none` 产物内 `Godot|gdmcp|.tscn` 命中 = 0）；**(b) 豁免规则已落**（示例语境：`--include=`/`示例`/`例如` ⇒ TC33 豁免；实测 `--pack none` 泄漏 3→0，pass=33） |
 | **10** | **core 全件漂移扫描（缺口）** | — | — | — | — | 原清单只扫 `packs/` 侧 ⇒ **补扫** `core/skills/*` · `core/AGENTS.md.tmpl` · `core/CONTEXT.md.tmpl` · `core/LESSONS.md.tmpl` · `core/designs-README.md` · `core/pi-settings.json`（否则**单向收敛会漏 core**） | **待补扫** |
 
