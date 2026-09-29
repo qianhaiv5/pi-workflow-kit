@@ -101,7 +101,7 @@
 | **tester（验收）** | 受影响模块单测（改前/改后同一命令对照） | 受影响模块 + L1，**禁全量** | 全量 L1–L4 **一次** + `健康门禁` |
 | **Coordinator（独立复算）** | 定向复算（关键断言/单文件 定向过滤） | 受影响模块 + 关键断言定向复算 | 全量 **一次** + `健康门禁` |
 
-**渲染级牙口（2026-09-25 立 · B5 演出不可见事故后）**：`tools/测试脚本` **恒带 `--headless`**，而 headless 下 Godot 无渲染器（`RenderingServer.get_video_adapter_name() == ""`、`get_texture().get_image()` 返回 null）⇒ **一切「画面是否真被绘制」的断言在常规 suite 里天然隐形**（事故：B5 泡茶演出 20/20 绿但画面上什么都没画出来）。
+**渲染级牙口（2026-09-25 立 · B5 演出不可见事故后）**：`tools/测试脚本` **恒带 `--headless`**，而 headless 下 引擎无渲染器（`RenderingServer.get_video_adapter_name() == ""`、`get_texture().get_image()` 返回 null）⇒ **一切「画面是否真被绘制」的断言在常规 suite 里天然隐形**（事故：B5 泡茶演出 20/20 绿但画面上什么都没画出来）。
 
 - **凡改动渲染路径的批次**（新 UI 宿主/图层变更/`z_index`/`CanvasLayer`/SubViewport/可见性链）⇒ 定向清单**必须加上**渲染级测试，并**非 headless** 跑：
   ```bash
