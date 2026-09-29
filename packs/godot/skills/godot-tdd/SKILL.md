@@ -1,8 +1,8 @@
 ---
 name: godot-tdd
 description: >
-  Test-driven development for Godot. Red-green-refactor loop adapted for GDScript (GUT)
-  and C# (xUnit/NUnit). Use when building features or fixing bugs test-first, or when
+  Test-driven development for Godot. Red-green-refactor loop adapted for GDScript (e.g. GUT)
+  and C# (e.g. xUnit/NUnit). Use when building features or fixing bugs test-first, or when
   the user mentions "TDD", "test-first", or "red-green-refactor".
 ---
 
@@ -16,8 +16,11 @@ This skill adapts the TDD discipline for Godot's specific testing landscape.
 
 | Language | Framework | Best For |
 |----------|-----------|----------|
-| GDScript | [GUT](https://github.com/bitwes/Gut) | Scene tests, signal tests, UI interaction |
-| C# | xUnit / NUnit | Data models, game logic, state machines, serialization |
+| GDScript | [GUT](https://github.com/bitwes/Gut)（**变体：若项目采用**；见 `--test-runner`） | Scene tests, signal tests, UI interaction |
+| C# | xUnit / NUnit（**变体：若项目有 C#**） | Data models, game logic, state machines, serialization |
+
+> ⚠️ **先确认你项目的跑器**：由 `apply-kit --test-runner`（见 KIT-GOVERNANCE §2.1 `kit-binding`）与 §2.2 的**示例标注**决定「用哪个」；
+> **GUT / xUnit 仅为示例**，不是默认框架。若项目不用它们 ⇒ 本技能的「GUT / xUnit quick reference」两节仅作参考，请以项目自有跑器为准。
 
 ## What a good Godot test is
 
