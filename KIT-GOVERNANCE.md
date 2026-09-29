@@ -34,12 +34,24 @@
 1. **声明为变体**：显式写成「**变体 A（GUT）**：… ／ **变体 B（自研 runner）**：…」，并给出**替换指令**（消费方选一个）；
 2. 或**占位 + 替换要求**：`{{TEST_RUNNER_CMD}}` + 同段内写明「**必须替换为本项目真实跑器；GUT 只是示例**」。
 
-**机检判据（换项目还成立吗？）**：
+**机检判据（换项目还成立吗？）**（与 §5.1 反例 F 的两档命令同源，此处只看 runner/工具名）：
 ```bash
 # ① 模板内出现的命令名/工具名，必须在消费方仓能找到；找不到 ⇒ 只能是占位或变体声明
 grep -oE '\b(run_gut\.ps1|run_tests\.gd|xunit|dotnet|gut)\b' packs/**/*.tmpl | sort -u
 # ② 命中项若无 [[变体声明]] 或 {{占位}} 包裹 ⇒ FAIL
 ```
+
+### 2.1 · 安装事实单点：消费方 `.pi/kit-binding.json`（**版本锚**）
+
+**问题**：模板/文档里的数字与 runner 名会随时间漂移 ⇒ 「这份 kit 是哪一版、当时选了哪个变体」**无处可查**（2026-09-29 反例 A 的根因之一）。
+
+**约定**：`apply-kit.mjs` 在消费方仓写 **`.pi/kit-binding.json`**：
+```json
+{ "kit_commit": "<kit 仓 commit>", "variant": { "test_runner": "gut|custom" }, "applied_at": "<ISO8601>" }
+```
+**判据（可机检）**：① 文件存在 ② `variant.test_runner` 非空 ③ `variant.test_runner` **与模板实际替换值一致**（禁「声明 gut、正文 custom」）④ `kit_commit` 能在 kit 仓 `git cat-file -e` 命中。
+**配套（见 §2）**：`apply-kit.mjs --test-runner <gut|custom>` **缺参 ⇒ 落 `TODO-选-runner` + 警告，不猜**（与既有 `--godot-path` 同款纪律；判据：缺参时不得产出可用 runner 命令）。
+**引用**：本单点被 §4 采纳记录引用（「依据」列可写「kit-binding@<commit>/<variant>」）。
 
 ---
 
@@ -71,7 +83,20 @@ grep -oE '\b(run_gut\.ps1|run_tests\.gd|xunit|dotnet|gut)\b' packs/**/*.tmpl | s
 | **B** | **L3 上行** | 把「门禁 21 项」「真档 `saves/autosave.json`」「某项目基线数字」写进 `core/` 模板 | 消费方照抄即错 | 2026-09-29 收敛清单 #1/#2/#4 |
 | **C** | **SKIP 当 pass** | 牙口脚本把「环境缺失 ⇒ 未验证」计成通过 | 抠掉环境 ⇒ 仍报全绿 | §3（TC30） |
 | **D** | **撞车·未推提交** | 共用路径仓里存在**未推提交**的新文件 ⇒ 对方在远端看不到 ⇒ **双实现撞同一路径** | 见 `LOCK.md` §撞车判据**三态**（撞车 / **未复核** / 正常）；⚠ 网络失败 ⇒ **未复核**，禁下结论 | 2026-09-29 `af0ff0a`（对方）vs `e8279e0`（我方）同建 `tools/kit-lock.mjs` |
+| **F** | **宿主路径入共享仓** | `pi-config-backup` / `pi-workflow-kit` 为**跨机共享** ⇒ 任何宿主专属路径（用户名 / 盘符 / 程序安装路径）都会把**对方机器**带进本机文档（2026-09-29 双向实测：本机文档曾含 `C:/Users/<对方用户名>/…`；本方 `D:/MyGame_journey` 出现在对方拉到的 kit 里） | **两档**（见 §5.1） | 2026-09-29 双向实测（两台机各自命中） |
 | **E** | **工具面错配** | 模板写消费方**不可能存在**的工具/runner（如纯 GDScript 项目里的 `GUT`/`xUnit`/`run_gut.ps1`） | §2 机检：命令名在消费方仓不存在 ∧ 未声明变体/占位 ⇒ FAIL | 2026-09-29 对方项目实测（污染链：源项目 → 该模板 → kit → 消费方） |
+
+### 5.1 · 反例 F 的两档判据（可机检 · 2026-09-29 对方细化）
+
+```bash
+# 档① 用户目录档：非本机用户名 ⇒ 红（对方宿主残留）
+grep -rnE '[A-Za-z]:[\\/]Users[\\/][A-Za-z0-9_.-]+' --include='*.md' . | grep -vi "$(basename "$HOME")"
+# 档② 绝对程序路径档：安装类路径 ⇒ 红（须占位化或改 machine-paths.mjs 派生）
+grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include='*.md' .
+```
+**白名单**：`D:/tmp` 类**约定**路径（项目共用暂存）与 `$HOME` 派生值。
+**修法**：改占位符（`<npm 全局根>` / `<源项目根>` / `{{GODOT_PATH}}`）或 `node bin/machine-paths.mjs` 的解析值；**禁**在共享文档里写具体盘符/用户名。
+**豁免（须登记）**：确需示例时写成**占位形态**（`C:/Users/<对方用户名>/…`）—— 注意这会让档①判据自命中 ⇒ 判据须配 `grep -v` 排除含 `<` 的示例行（或示例改用不可匹配写法）。
 
 ---
 
