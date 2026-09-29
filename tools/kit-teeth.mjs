@@ -202,9 +202,12 @@ try {
     for (const f of walk(path.join(KIT, "packs"))) {
       if (!/\.(tmpl|md|toml|json|sh)$/.test(f)) continue;
       const lines = fs.readFileSync(f, "utf8").split("\n");
+      let heading = "";                 /* 章级作用域（2026-09-29）：变体/示例声明作用于**其所在节** */
       lines.forEach((l, i) => {
+        if (/^#{1,6}\s/.test(l)) heading = l;
         if (!RUNNER_RE.test(l)) return;
-        if (OK_CTX.test(l)) return;
+        if (OK_CTX.test(l)) return;         /* 行内标记 */
+        if (OK_CTX.test(heading)) return;   /* 所在节标题已声明（避免每行重复标记） */
         hits.push(`${path.relative(KIT, f).replace(/\\/g, "/")}:${i + 1}`);
       });
     }
