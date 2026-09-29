@@ -1,3 +1,6 @@
 *.log
 .DS_Store
 node_modules/
+
+# kit 写权锁（跨 agent 协调用，运行时文件，不入库；见 tools/kit-lock.mjs）
+.kit-lock.json

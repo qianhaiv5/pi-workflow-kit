@@ -22,6 +22,9 @@ const EXTRACT = path.join(TOOLS, "extract-kit.mjs");
 
 const results = [];
 const check = (name, cond, extra = "") => { results.push([name, !!cond, extra]); };
+/* 三态（2026-09-29 修假绿）：SKIP = **未验证**（环境缺失）⇒ 不计入 pass，且不得报「全绿」。
+   动机：TC30 原把 SKIP 分支写成 check(..., true, …) ⇒ 无源机器上「没验证」被当「通过」（对方 agent 实测）。 */
+const skip = (name, extra = "") => { results.push([name, "SKIP", extra]); };
 const run = (args, opts = {}) => spawnSync(process.execPath, [APPLY, ...args], { encoding: "utf8", ...opts });
 
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "kit-teeth-"));
@@ -159,8 +162,8 @@ try {
     const src = process.env.KIT_SRC || "D:/MyGame_journey";
     const srcOk = fs.existsSync(path.join(src, ".pi", "agents", "PIPELINE.md"));
     if (!srcOk) {
-      check("TC30 extract-kit --check 通过（kit 与源同步）", true,
-        `SKIP：本机无源项目（${src} 缺 .pi/agents/PIPELINE.md）⇒ 置 KIT_SRC=<源项目根（kit 抽取来源）> 后再验`);
+      skip("TC30 extract-kit --check 通过（kit 与源同步）",
+        `SKIP：本机无源项目（${src} 缺 .pi/agents/PIPELINE.md）⇒ 置 KIT_SRC=<源项目根（kit 抽取来源）> 后再验（**SKIP ≠ pass**）`);
     } else {
       const r = spawnSync(process.execPath, [EXTRACT, "--check", "--from", src], { encoding: "utf8" });
       check("TC30 extract-kit --check 通过（kit 与源同步）", r.status === 0, `exit=${r.status} ${(r.stdout + r.stderr).split("\n").filter((l) => /不同步|✗/.test(l)).join(" ")}`);
@@ -170,7 +173,14 @@ try {
   fs.rmSync(TMP, { recursive: true, force: true });
 }
 
-for (const [n, ok, extra] of results) console.log(`${ok ? "OK  " : "FAIL"} ${n}${extra ? "  -> " + extra : ""}`);
-const fail = results.filter(([, ok]) => !ok).length;
-console.log(`\n结果：pass=${results.length - fail} fail=${fail}`);
+for (const [n, ok, extra] of results) {
+  const tag = ok === "SKIP" ? "SKIP" : ok ? "OK  " : "FAIL";
+  console.log(`${tag} ${n}${extra ? "  -> " + extra : ""}`);
+}
+const fail = results.filter(([, ok]) => ok === false).length;
+const skips = results.filter(([, ok]) => ok === "SKIP").length;
+const pass = results.length - fail - skips;
+console.log(`\n结果：pass=${pass} skip=${skips} fail=${fail}`);
+if (skips) console.log(`⚠ ${skips} 项 SKIP = **未验证**（不计 pass）⇒ 本次**不构成全绿**；补齐环境后重跑`);
+else if (!fail) console.log(`✅ 全绿（${pass}/${results.length}）`);
 process.exit(fail ? 1 : 0);
