@@ -129,8 +129,11 @@ const VARS = {
   PROJECT_NAME_EN: val("--name-en", BASENAME),
   PROJECT_REPO: val("--repo", BASENAME),
   PROJECT_ROOT: val("--root", POSIX_ROOT),
-  ENGINE: val("--engine", "Godot"),
-  ENGINE_VERSION: val("--engine-version", "4.7"),
+  /* #11(a)（2026-09-29）：引擎默认值**随 pack 走** —— `--pack none`（引擎无关项目）时若仍默认
+     "Godot 4.7"，产物会在 `AGENTS.md` / `coordinator.toml` / `designer.toml` 三处**泄漏引擎名**
+     （对方实测：apply-kit --pack none 后恰 3 行）。复用本文件既有的 `TODO-填-…` 纪律。 */
+  ENGINE: val("--engine", PACK === "none" ? "TODO-选引擎" : "Godot"),
+  ENGINE_VERSION: val("--engine-version", PACK === "none" ? "TODO-填引擎版本" : "4.7"),
   MODEL_HIGH: val("--model-high", defaultModel),
   MODEL_MEDIUM: val("--model-medium", defaultModel),
   CORE_MECHANIC: (() => {
@@ -239,6 +242,9 @@ if (has("--init-git") && !DRY && !fs.existsSync(path.join(TARGET, ".git"))) {
 
 /* ── 报告 ─────────────────────────────────────────────────────── */
 console.log(`[kit] target = ${TARGET}`);
+if (PACK === "none" && !val("--engine", "")) {
+  console.warn("[kit] ⚠ --pack none 且未给 --engine ⇒ 引擎字段落 `TODO-选引擎`（由你按新项目实际填写；勿留默认引擎名）");
+}
 console.log(`[kit] pack   = ${PACK}（core ${plan.filter((p) => p.from.includes(`${path.sep}core${path.sep}`)).length} 文件 · pack ${plan.filter((p) => p.from.includes(`${path.sep}packs${path.sep}`)).length} 文件）`);
 console.log(`[kit] ${DRY ? "（--dry-run 未落盘）" : ""}写入 ${written.length} · 追加 ${appended.length} · 跳过已存在 ${skipped.length}`);
 if (written.length) console.log("[kit]   写入: " + written.join(" · "));

@@ -156,6 +156,32 @@ try {
     check("TC29 mcp.json.tmpl 无源机布局残留", !/Godot_v4/.test(mcpT));
   }
   {
+    /* TC33（2026-09-29 · #11(a)）：`--pack none`（引擎无关项目）不得泄漏引擎名。
+       事故形态：apply-kit 的 `{{ENGINE}}` 默认写死 "Godot"/"4.7" ⇒ 产物在 AGENTS.md / coordinator.toml /
+       designer.toml 三处出现引擎名（对方实测 3 行）。修法：引擎默认值随 pack（none ⇒ TODO-选引擎）。 */
+    const probe = path.join(TMP, "tc33-none");
+    const a = spawnSync(process.execPath, [APPLY, "--target", probe, "--pack", "none", "--name", "ProbeTC33"], { encoding: "utf8" });
+    let leaked = 0;
+    let todoSeen = false;
+    if (a.status === 0) {
+      /* #11(b) 豁免规则（2026-09-29）：**示例语境**不算泄漏 —— 例：交付前自检里的
+         `grep --include="*.gd" --include="*.tscn"` 是「举例说明 grep 怎么用」，不是「本引擎相关」。
+         与 §5.1「判据不得自命中」同族：不给豁免 ⇒ 判据恒红。 */
+      const EXEMPT = /(--include=|示例|举例|如\s*`|例如)/;
+      for (const f of walk(probe)) {
+        const lines = fs.readFileSync(f, "utf8").split("\n");
+        for (const l of lines) {
+          if (!/\bGodot\b|gdmcp|\.tscn/.test(l)) continue;
+          if (EXEMPT.test(l)) continue;
+          leaked++;
+        }
+        if (/TODO-选引擎/.test(fs.readFileSync(f, "utf8"))) todoSeen = true;
+      }
+    }
+    check("TC33 --pack none 产物不泄漏引擎名（且落 TODO-选引擎）", a.status === 0 && leaked === 0 && todoSeen,
+      `exit=${a.status} 泄漏文件=${leaked} TODO占位=${todoSeen}`);
+  }
+  {
     /* TC32（2026-09-29 · 对方 agent 实测事故）：`apply-kit --target` 若被解析到 **kit 仓内部**
        （典型成因：WSL 下传 `F:/x` ⇒ path.resolve(cwd, target) 当相对路径 ⇒ `<kit>/F:/x`），
        会污染共用工具箱工作树，且产物检查读到空目录 ⇒ **假绿**。⇒ 必须 exit 2 且**不落盘**。 */
