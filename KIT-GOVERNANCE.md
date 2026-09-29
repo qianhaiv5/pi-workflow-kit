@@ -74,18 +74,16 @@ grep -oE '\b(run_gut\.ps1|run_tests\.gd|xunit|dotnet|gut)\b' packs/**/*.tmpl | s
 
 **TC31 匹配词表（2026-09-29 显式登记 · 供消费方独立复算）**
 
-> ⚠️ **复算口径**：用**同一份词表** + 同样的豁免规则（行内 ∨ 所在 Markdown 节标题）才可比数；少一个词（如漏 
-Usage: dotnet [options]
-Usage: dotnet [path-to-application]
+```js
+// tools/kit-teeth.mjs · TC31
+const RUNNER_RE = /(run_gut\.ps1|run_tests\.gd|xunit|\bGUT\b|\bdotnet\b)/;  // 大小写不敏感 · 5 词
+const OK_CTX    = /(\{\{|变体|示例|仅为示例|占位)/;                               // 行内 or 所在节标题命中 ⇒ 豁免
+```
 
-Options:
-  -h|--help         Display help.
-  --info            Display .NET information.
-  --list-sdks       Display the installed SDKs.
-  --list-runtimes   Display the installed runtimes.
+> ⚠️ **复算口径**：必须用**同一份词表** + 同一套豁免规则（行内 ∨ 所在 Markdown 节标题）才可比数；
+> 少一个词（如漏 `dotnet`）就会得到更小的数 —— 对方曾用 **4 词**统计得 **29**，与 TC31 的 **47**（当时值）**不矛盾**（词表不同）。
 
-path-to-application:
-  The path to an application .dll file to execute.）会得到更小的数（对方曾用 4 词得 29，与 TC31 的 47 不矛盾 —— 词表不同）。
+> 📌 **写入纪律（本轮两次踩坑）**：**禁**用 shell 内联脚本编辑共享文档 —— 文本里的**反引号/`$`** 会被 shell 当命令替换执行 ⇒ 内容被静默吃掉（本页同一段曾被吃掉一次，靠复核发现）。
 
 **反例（必须红）**：裸写 `powershell -File tools/run_gut.ps1` / `GUT` / `xUnit` 且**无**上述任一标记 ⇒ FAIL。
 **配套纪律**：**禁为让牙口变绿而放宽判据** —— 若确认某类行永远无法满足，应把它写进本表（= 显式登记豁免），而不是删判据或加白名单文件路径。
