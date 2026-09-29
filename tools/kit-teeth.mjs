@@ -156,6 +156,16 @@ try {
     check("TC29 mcp.json.tmpl 无源机布局残留", !/Godot_v4/.test(mcpT));
   }
   {
+    /* TC32（2026-09-29 · 对方 agent 实测事故）：`apply-kit --target` 若被解析到 **kit 仓内部**
+       （典型成因：WSL 下传 `F:/x` ⇒ path.resolve(cwd, target) 当相对路径 ⇒ `<kit>/F:/x`），
+       会污染共用工具箱工作树，且产物检查读到空目录 ⇒ **假绿**。⇒ 必须 exit 2 且**不落盘**。 */
+    const inside = path.join(KIT, "F--probe-tc32");
+    const r32 = spawnSync(process.execPath, [APPLY, "--target", inside, "--pack", "none", "--dry-run"], { encoding: "utf8" });
+    const landed = fs.existsSync(inside) || fs.existsSync(path.join(KIT, "F:"));
+    check("TC32 --target 落在 kit 仓内 ⇒ 拒绝（exit 2）且不落盘", r32.status === 2 && !landed,
+      `exit=${r32.status} landed=${landed}`);
+  }
+  {
     /* TC31（2026-09-29 立 · 对方项目实证的污染链）：
        模板/文档里出现的**具体 runner / 工具名**必须落在「变体块 / 占位符 / 示例」语境内；
        裸着写 ⇒ 消费方照抄即错（纯 GDScript 项目会被塞进 GUT/xUnit/run_gut.ps1）。

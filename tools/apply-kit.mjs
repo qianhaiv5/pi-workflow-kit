@@ -74,6 +74,21 @@ if (!targetArg) {
   process.exit(2);
 }
 
+/* 拒 Windows 盘符形态：WSL/POSIX 下 path.resolve("F:/x") ⇒ "<cwd>/F:/x"（**相对路径**）
+   ⇒ 产物落进 kit 仓内的字面目录（污染共用仓），且产物检查读到空目录 ⇒ **假绿**。
+   （2026-09-29 对方 agent 实测事故；本守卫为配套修复） */
+const WIN_ABS_RE = /^[A-Za-z]:[\\/]/;
+/* ⚠️ 只在 **非 Windows 平台**（WSL/POSIX）拦 —— 在 Windows 上 `F:/x` 是**合法绝对路径**（path.resolve 正常解析），
+   一律拦会误伤。事故形态（对方实测）本就发生在 WSL。平台无关的那半由下方「目标落在 kit 仓内部」守卫兜底。 */
+if (process.platform !== "win32" && WIN_ABS_RE.test(targetArg)) {
+  console.error(
+    `[kit] ✗ 拒写：--target "${targetArg}" 看起来是 **Windows 绝对路径**（X:/…）。\n` +
+    `[kit]    在 WSL/POSIX 下 path.resolve 会把它当**相对路径** ⇒ 产物落进 kit 仓内的字面目录（共用仓被污染），\n` +
+    `[kit]    且后续产物检查会读到空目录 ⇒ **假绿**。\n` +
+    `[kit]    ⇒ 请改用 POSIX 绝对路径（如 /mnt/f/Home_She_Grows）；要在 Windows 侧跑 ⇒ 请在 Windows shell 里执行。`);
+  process.exit(2);
+}
+
 const DRY = has("--dry-run");
 const FORCE = has("--force");
 const PACK = val("--pack", "godot");
@@ -90,6 +105,7 @@ const guardHit = (() => {
   if (looksLikeAgentDir(TARGET)) return "目标含 settings.json + npm/node_modules，看着像 pi 全局配置目录";
   const kit = norm(KIT);
   if (kit === t || kit.startsWith(t + "/")) return `目标 ${TARGET} 是 kit 自身所在树（会覆盖工具箱）`;
+  if (t.startsWith(kit + "/")) return `目标 ${TARGET} 落在 **kit 仓内部**（会污染共用工具箱工作树）`;
   return null;
 })();
 if (guardHit) {

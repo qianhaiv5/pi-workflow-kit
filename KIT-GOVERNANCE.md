@@ -71,6 +71,16 @@ grep -oE '\b(run_gut\.ps1|run_tests\.gd|xunit|dotnet|gut)\b' packs/**/*.tmpl | s
 | 日期 | 条目（文件/片段） | 来源 | 层级 | 评估人（agent@项目） | 依据（哪条判据/反例） | 结论 |
 ```
 
+### 4.1 采纳记录（2026-09-29 批）
+
+| 日期 | 条目 | 来源 | 层级 | 评估人 | 依据 | 结论 |
+|---|---|---|---|---|---|---|
+| 2026-09-29 | LOCK.md（锁纪律） | 对方 `af0ff0a`（未推） | L1 | `AmberFalcon@D:/MyGame_journey` | 含「层 1 拍板」出处 + 5 条纪律；我方 A0 仅跑过 `status` | **采纳**（纪律基线=对方；代码基线=我方 `kit-lock.mjs`） |
+| 2026-09-29 | §2.1 `kit-binding` 版本锚 | 对方提议 | L1 | 同上 | 补上我方缺的安装事实单点 | **采纳** |
+| 2026-09-29 | §2 变体声明制 / §5.1 判据不自命中 | 对方评审 | L1 | 同上 | 「未声明即错；声明即合法变体」+ 判据不得自命中 | **采纳** |
+| 2026-09-29 | #11 `core/` 引擎专属内容 | 我方发现 + 对方细化（影响面收窄） | L1 | 同上 | 层级击穿；但 `--pack none` 后实际泄漏 4 行/3 文件 | **采纳（拆 a/b）**；执行待收敛批 |
+| 2026-09-29 | 反例 G（`--target` 相对路径 ⇒ 落进共用仓 + 假绿） | 对方实测 | L1 | 同上 | 现场复现（已清理） | **采纳**；守卫 + TC32 已落 |
+
 **未填完的采纳 = 未生效**（禁「口头采纳」）。跨机可见性：采纳记录**写在 kit 内**才算双方可见（对方在远端读）。
 
 ---
@@ -84,6 +94,7 @@ grep -oE '\b(run_gut\.ps1|run_tests\.gd|xunit|dotnet|gut)\b' packs/**/*.tmpl | s
 | **C** | **SKIP 当 pass** | 牙口脚本把「环境缺失 ⇒ 未验证」计成通过 | 抠掉环境 ⇒ 仍报全绿 | §3（TC30） |
 | **D** | **撞车·未推提交** | 共用路径仓里存在**未推提交**的新文件 ⇒ 对方在远端看不到 ⇒ **双实现撞同一路径** | 见 `LOCK.md` §撞车判据**三态**（撞车 / **未复核** / 正常）；⚠ 网络失败 ⇒ **未复核**，禁下结论 | 2026-09-29 `af0ff0a`（对方）vs `e8279e0`（我方）同建 `tools/kit-lock.mjs` |
 | **F** | **宿主路径入共享仓** | `pi-config-backup` / `pi-workflow-kit` 为**跨机共享** ⇒ 任何宿主专属路径（用户名 / 盘符 / 程序安装路径）都会把**对方机器**带进本机文档（2026-09-29 双向实测：本机文档曾含 `C:/Users/<对方用户名>/…`；本方 `D:/MyGame_journey` 出现在对方拉到的 kit 里） | **两档**（见 §5.1） | 2026-09-29 双向实测（两台机各自命中） |
+| **G** | **工具参数被当相对路径 ⇒ 落进共用仓 + 假绿** | 例：WSL 下 `apply-kit --target F:/x` ⇒ `path.resolve(cwd, target)` 当**相对路径** ⇒ 产物落进 `<kit>/F:/x`（污染共用工作树），且后续**产物检查读到空目录 ⇒ 假绿** | 守卫：`apply-kit` 拒「目标落在 kit 仓内」（exit 2）+ 非 Windows 平台拒盘符形态；牙口 TC32（exit 2 ∧ 不落盘） | 2026-09-29 对方 agent 实测（已自行 `rm -rf ./F:` 清理） |
 | **E** | **工具面错配** | 模板写消费方**不可能存在**的工具/runner（如纯 GDScript 项目里的 `GUT`/`xUnit`/`run_gut.ps1`） | §2 机检：命令名在消费方仓不存在 ∧ 未声明变体/占位 ⇒ FAIL | 2026-09-29 对方项目实测（污染链：源项目 → 该模板 → kit → 消费方） |
 
 ### 5.1 · 反例 F 的两档判据（可机检 · 2026-09-29 对方细化）
@@ -119,6 +130,7 @@ grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include
 | 7 | `skills/godot-bug-hunt/SKILL.md` | 120/104 | 16 | kit 领先 | **L2（待 L3 复筛）** | 同上 | 待评估 |
 | 8 | `skills/godot-docs/SKILL.md` | 99/90 | 17 | kit 领先 | **L2（待 L3 复筛）** | 同上（含 `{{GODOT_DOCS_DIR}}` 占位） | 待评估 |
 | 9 | `skills/godot-tdd/SKILL.md` | 133/117 | 16 | kit 领先 | **L2（待 L3 复筛）** | 对方项目**明令不引 GUT** ⇒ 该文件含 GUT/xUnit 正文，必须逐句筛（§2 变体声明制） | 待评估 |
+| **11** | **`core/` 混入引擎专属内容（层级击穿）** | — | — | — | **拆两半**：**(a) 必修**=前 3 处占位化（`AGENTS.md` 引擎行 / `.pi/agents/coordinator.toml` 引擎行 / `.pi/agents/designer.toml:2` description 硬写引擎名）⇒ 改 `{{ENGINE}}`/`{{ENGINE_VERSION}}` 由 pack 填；**(b) 豁免规则**=示例语境（如 `grep --include="*.gd"` 的举例）给明确豁免，否则判据恒红（与「判据不得自命中」同族） | 判据：`core/**` 内 `grep -E "gdmcp|Godot|\.tscn|\.tres|\.gd\b|9080"` 命中 ∧ 非豁免语境 ⇒ ❌。**影响面实测（对方）**：core/** 19 行/5 文件，但 `apply-kit --pack none` 后**实际泄漏仅 4 行/3 文件**（PIPELINE.md 的 12 行已被 apply-kit 处理） | **待评估**（我方单写者；采纳记录见 §4） |
 | **10** | **core 全件漂移扫描（缺口）** | — | — | — | — | 原清单只扫 `packs/` 侧 ⇒ **补扫** `core/skills/*` · `core/AGENTS.md.tmpl` · `core/CONTEXT.md.tmpl` · `core/LESSONS.md.tmpl` · `core/designs-README.md` · `core/pi-settings.json`（否则**单向收敛会漏 core**） | **待补扫** |
 
 ---
