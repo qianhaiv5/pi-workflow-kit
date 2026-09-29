@@ -35,6 +35,7 @@ const USAGE = `apply-kit —— 把 kit（core + 选定 pack）落到一个新�
 
 可选：
   --pack <godot|none>      引擎包（默认 godot）
+  --test-runner <命令>     测试入口命令（占位 TEST_RUNNER_CMD 的值；缺省落 TODO-选跑器）
   --name / --name-en       项目中文名 / 英文名（默认取目录名）
   --repo <git仓名>         项目仓名（默认取目录名）
   --root <路径>            写入文档的绝对根路径（默认 = --target 实解析值）
@@ -53,7 +54,7 @@ const USAGE = `apply-kit —— 把 kit（core + 选定 pack）落到一个新�
 `;
 
 const KNOWN_FLAGS = new Set([
-  "--target", "--pack", "--name", "--name-en", "--repo", "--root", "--engine", "--engine-version",
+  "--target", "--pack", "--name", "--name-en", "--repo", "--root", "--engine", "--engine-version", "--test-runner",
   "--model-high", "--model-medium", "--godot-path", "--godot-docs", "--core-mechanic", "--core-mechanic-note",
   "--arch-layering", "--dry-run", "--force", "--init-git", "--help", "-h",
 ]);
@@ -132,6 +133,9 @@ const VARS = {
   /* #11(a)（2026-09-29）：引擎默认值**随 pack 走** —— `--pack none`（引擎无关项目）时若仍默认
      "Godot 4.7"，产物会在 `AGENTS.md` / `coordinator.toml` / `designer.toml` 三处**泄漏引擎名**
      （对方实测：apply-kit --pack none 后恰 3 行）。复用本文件既有的 `TODO-填-…` 纪律。 */
+  /* TC31/§2 变体声明制（2026-09-29）：pack 模板里的测试入口命令已占位化为 `{{TEST_RUNNER_CMD}}`
+     ⇒ 必须在此有对应值，否则会落「未替换占位符」错误。缺省落 TODO（+ 警告），禁猜。 */
+  TEST_RUNNER_CMD: val("--test-runner", "TODO-选跑器（测试入口命令，如 GUT 项目用 powershell -File tools/run_gut.ps1）"),
   ENGINE: val("--engine", PACK === "none" ? "TODO-选引擎" : "Godot"),
   ENGINE_VERSION: val("--engine-version", PACK === "none" ? "TODO-填引擎版本" : "4.7"),
   MODEL_HIGH: val("--model-high", defaultModel),

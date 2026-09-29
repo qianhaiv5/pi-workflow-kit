@@ -42,7 +42,7 @@ Godot 项目使用混合测试策略：
 4. **成本参考（口径：以最近一次全量实测为准）**：全量 = **见 `PIPELINE.md:132` 现值（2026-09-29 批Y1/Y2 实测：215 脚本 / 2507 用例 / Failing 0 / ≈357 s）**；出处 = `.pi/agents/PIPELINE.md` §成本账（含 runner `elapsed` 与日志路径）；⚠️ **禁在多个文件重复写同一组数字**（以免各自陈旧）—— 本行只写「口径句 + 指针」，现值以 `PIPELINE.md` 为准；
    数字随批次增长 ⇒ 每次全量后回写此处，禁当长期基线；模块级（单文件 `-gselect`）≈ **5-20 s**。
    ⇒ 可预算的定向取证优先于"跑一遍全量看看"。
-5. 需要定向运行时用现成脚本：`powershell -File tools/run_gut.ps1 -Files tests/unit/test_x.gd`（或 `-Full`）。
+5. 需要定向运行时用现成脚本：`powershell -File {{TEST_RUNNER_CMD}} -Files tests/unit/test_x.gd`（或 `-Full`）。
 
 ### 档位口径
 - **Lite 档**：只跑受影响模块单测（且优先交回"改动前后同一命令对照"）。

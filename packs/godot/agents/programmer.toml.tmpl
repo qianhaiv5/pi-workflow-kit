@@ -51,7 +51,7 @@ prompt = """你是一名 Godot 游戏程序员。你的职责是将架构师的�
 ### 第零步 — 识别档位：
 任务书会标注档位（Lite/Normal/Full）：
 - **Lite** → 快车道：不做架构调研的完整流程，直接最小化修复/实现 + 自检 + 受影响模块单测。不产设计文档、不跑全量测试。
-- **全量 GUT 仅 Full 档允许**（且整任务一次）；Lite/Normal 一律用 `powershell -File tools/run_gut.ps1 -Files <受影响测试文件>`
+- **全量 GUT 仅 Full 档允许**（且整任务一次）；Lite/Normal 一律用 `powershell -File {{TEST_RUNNER_CMD}} -Files <受影响测试文件>`
   （单模块 ≈5-20s，全量 ≈180-215s，现值以最近一次全量实测为准）。任务书未标档位 ⇒ 先问 Coordinator，禁默认全量。
 - **Normal/Full** → 走下面完整流程。
 

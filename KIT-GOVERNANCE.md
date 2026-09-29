@@ -71,6 +71,22 @@ grep -oE '\b(run_gut\.ps1|run_tests\.gd|xunit|dotnet|gut)\b' packs/**/*.tmpl | s
 `packs/godot/agents/*.toml`（**无 markdown 标题**）**不适用** ⇒ 这些文件里的裸 runner 名必须**逐行**标记（或改 `{{TEST_RUNNER_CMD}}` 占位）。
 实测：加章级作用域后裸名 49 → **47**（仅 2 行因所在节标题含标记而豁免）；剩余 47 处以 toml 为主 ⇒ **下一批逐行声明**。
 
+
+**TC31 匹配词表（2026-09-29 显式登记 · 供消费方独立复算）**
+
+> ⚠️ **复算口径**：用**同一份词表** + 同样的豁免规则（行内 ∨ 所在 Markdown 节标题）才可比数；少一个词（如漏 
+Usage: dotnet [options]
+Usage: dotnet [path-to-application]
+
+Options:
+  -h|--help         Display help.
+  --info            Display .NET information.
+  --list-sdks       Display the installed SDKs.
+  --list-runtimes   Display the installed runtimes.
+
+path-to-application:
+  The path to an application .dll file to execute.）会得到更小的数（对方曾用 4 词得 29，与 TC31 的 47 不矛盾 —— 词表不同）。
+
 **反例（必须红）**：裸写 `powershell -File tools/run_gut.ps1` / `GUT` / `xUnit` 且**无**上述任一标记 ⇒ FAIL。
 **配套纪律**：**禁为让牙口变绿而放宽判据** —— 若确认某类行永远无法满足，应把它写进本表（= 显式登记豁免），而不是删判据或加白名单文件路径。
 

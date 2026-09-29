@@ -179,6 +179,21 @@ const CORE_WORDS = [
   ["run_gut.ps1", "测试入口脚本"],
 ];
 
+/* ── PACK 词级替换（2026-09-29 立 · 镜像 CORE_WORDS · TC31 线）────────────
+   动机：pack 模板里出现的**具体 runner 命令**会被消费方照抄 ⇒ 而其项目未必有该命令。
+   处置：命令形态 → `{{TEST_RUNNER_CMD}}` 占位（值由 `apply-kit --test-runner` 注入）。
+   注：只替换**命令形态**；纯 prose 提及（GUT/xUnit/dotnet）留给「变体/示例」显式声明。 */
+const PACK_WORDS = [
+  ["powershell -File {{TEST_RUNNER_CMD}}", "{{TEST_RUNNER_CMD}}"],
+  ["tools/run_gut.ps1", "{{TEST_RUNNER_CMD}}"],
+  ["run_gut.ps1", "{{TEST_RUNNER_CMD}}"],
+];
+function applyPackWords(text) {
+  let x = text;
+  for (const [from, to] of PACK_WORDS) x = x.split(from).join(to);
+  return x;
+}
+
 /* ── ④ 区段标记规则（按文本锚点，不按行号） ─────────────────────── */
 const MARKERS = [
   { dst: "core/agents/PIPELINE.md.tmpl", pack: "godot",
@@ -283,6 +298,7 @@ function transform(dstRel, raw) {
     text = text.replace(r.re, r.to);
   }
   if (dstRel.startsWith("core/")) text = applyCoreWords(text);
+  if (dstRel.startsWith("packs/")) text = applyPackWords(text);   /* TC31：pack 命令形态占位化 */
   // 行尾统一 LF：kit 是跨平台分发物，源项目里可能混 CRLF（外部技能包/手写文件）⇒ 不统一会与 --check 假漂移
   return text.split(String.fromCharCode(13) + String.fromCharCode(10)).join(String.fromCharCode(10));
 }
