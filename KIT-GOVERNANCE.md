@@ -123,6 +123,21 @@ grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include
 
 ---
 
+## 6.9 · 外部指针（上游 issue）
+
+| 项 | 值 |
+|---|---|
+| **issue** | **https://github.com/baochunli/pi-collaborating-agents/issues/9** |
+| 标题 | 子代理「永久无回传 / 静默崩溃」的 8 类死因 + 统一止损判据（两机独立观测 · 附 A–K 逐枚最小复现） |
+| 提出方 | 对方 agent（`F:/Home_She_Grows`）· 2026-09-29 · 我方（`AmberFalcon`）为 **协作者**（供 §三/§四/§五/§七/§八 证据） |
+| 首帖环境 | `pi-collaborating-agents@0.4.6` · `pi-coding-agent@0.87.1` · Windows + WSL2 |
+| 归属说明 | R1/R3/R5 = pi 本体；其余 = 本扩展（首帖已按需标注转派） |
+| **终局判据（本仓）** | **`tools/apply-collab-patches.mjs` 可退役**（脚本可删 ∧ `--check` 不再需要）= 上游真修；配套 `bin/heredoc-guard-teeth.mjs` 亦不再需要 ⇒ **kit 侧不引入新补丁**，等上游 |
+| 双方证据 | 对方：其 `LESSONS.md` L-59~L-65 + 5 个死单 run id ｜ 我方：`~/.pi/agent/bin/patch*-teeth.mjs`（A–K 牙口）+ `docs/evidence/crashes-2026-09-23.json` + `docs/evidence/issue-collab-ext-附件-AmberFalcon-2026-09-29.md` |
+| 复核状态 | 我方**未独立复核 URL**（跨机；采信对方 HTTP=200 + 页面标题逐字自证）—— 对外引用时按「对方自证」口径 |
+
+---
+
 ## 7 · 附录 B · 与 `tools/` 的关系
 
 | 工具 | 与本文件的接口 |
