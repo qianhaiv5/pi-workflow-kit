@@ -45,7 +45,8 @@ grep -oE '\b(run_gut\.ps1|run_tests\.gd|xunit|dotnet|gut)\b' packs/**/*.tmpl | s
 
 **问题**：模板/文档里的数字与 runner 名会随时间漂移 ⇒ 「这份 kit 是哪一版、当时选了哪个变体」**无处可查**（2026-09-29 反例 A 的根因之一）。
 
-**约定**：`apply-kit.mjs` 在消费方仓写 **`.pi/kit-binding.json`**：
+**✅ 已落地（2026-09-30 · 提交见 kit 历史）**：`apply-kit` 已实际写入该文件（含 `kit_commit` 由 `git -C <kit> rev-parse HEAD` 取得；取得失败 ⇒ 落 `TODO` + 警告，不猜）。牙口 **TC34** 四条判据：存在 ∧ `variant.test_runner` 非空 ∧ **与模板实际替换值一致** ∧ `kit_commit` 可在 kit 仓 `git cat-file -e` 解析。
+**约定（原文）**：`apply-kit.mjs` 在消费方仓写 **`.pi/kit-binding.json`**：
 ```json
 { "kit_commit": "<kit 仓 commit>", "variant": { "test_runner": "gut|custom" }, "applied_at": "<ISO8601>" }
 ```

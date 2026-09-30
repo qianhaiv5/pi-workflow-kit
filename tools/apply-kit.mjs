@@ -244,6 +244,32 @@ if (has("--init-git") && !DRY && !fs.existsSync(path.join(TARGET, ".git"))) {
   try { execSync("git init -q", { cwd: TARGET }); written.push(".git/ (git init)"); } catch (e) { warns.push(`git init 失败：${e.message}`); }
 }
 
+/* ── 安装事实单点：.pi/kit-binding.json（KIT-GOVERNANCE §2.1 · 2026-09-30 落）────
+   目的：回答「这份 kit 是哪一版 + 当时选了哪个变体」——此前无自动对账（版本锚靠人写采纳记录）。
+   四条判据（由 kit-teeth TC34 守）：① 文件存在 ② variant.test_runner 非空
+   ③ 与模板实际替换值一致 ④ kit_commit 能在 kit 仓解析。 */
+if (!DRY) {
+  let kitCommit = "TODO-未知（kit 仓无 git 或非克隆）";
+  try {
+    /* 顶部无 child_process 导入 ⇒ 用内置静态导入（ spawnSync 与 execSync 同源）；
+       早先误用未导入的 spawnSync ⇒ ReferenceError 被 catch 吃掉 ⇒ 静默落 TODO（2026-09-30 实测抓到） */
+    const { spawnSync } = await import("node:child_process");
+    const r = spawnSync("git", ["-C", KIT, "rev-parse", "HEAD"], { encoding: "utf8" });
+    if (r.status === 0 && String(r.stdout).trim()) kitCommit = String(r.stdout).trim();
+    else warns.push(`kit_commit 未取得（git status=${r.status}）—— 版本锚落 TODO，请手工核对 kit 仓`);
+  } catch (e) { warns.push(`kit_commit 未取得（${e.message}）`); }
+  const bindingPath = path.join(TARGET, ".pi", "kit-binding.json");
+  const data = {
+    kit_commit: kitCommit,
+    variant: { pack: PACK, engine: VARS.ENGINE, test_runner: VARS.TEST_RUNNER_CMD },
+    applied_at: new Date().toISOString(),
+    note: "由 apply-kit 写入（KIT-GOVERNANCE §2.1）。消费方对齐 kit 后应用新值覆盖本文件；禁手改语义字段。",
+  };
+  fs.mkdirSync(path.dirname(bindingPath), { recursive: true });
+  fs.writeFileSync(bindingPath, JSON.stringify(data, null, 2) + "\n", "utf8");
+  console.log(`[kit] binding = ${bindingPath}（kit_commit=${kitCommit.slice(0, 12)} · variant.test_runner=${String(VARS.TEST_RUNNER_CMD).slice(0, 40)}）`);
+}
+
 /* ── 报告 ─────────────────────────────────────────────────────── */
 console.log(`[kit] target = ${TARGET}`);
 if (PACK === "none" && !val("--engine", "")) {

@@ -156,7 +156,39 @@ try {
     check("TC29 mcp.json.tmpl 无源机布局残留", !/Godot_v4/.test(mcpT));
   }
   {
-    /* TC33（2026-09-29 · #11(a)）：`--pack none`（引擎无关项目）不得泄漏引擎名。
+    /* TC34（2026-09-30 · KIT-GOVERNANCE §2.1）：消费方安装事实单点 `.pi/kit-binding.json`
+       四条判据：① 文件存在 ② variant.test_runner 非空 ③ **与模板实际替换值一致**（禁「声明一个、正文另一个」）
+       ④ kit_commit 能在 kit 仓解析（`git cat-file -e`）。
+       动机：此前版本锚只能靠人写采纳记录 —— 无自动对账。 */
+    const probe = path.join(TMP, "tc34-binding");
+    const RUNNER = "PROBE_RUNNER_CMD_TC34";
+    const a = spawnSync(process.execPath, [APPLY, "--target", probe, "--pack", "godot",
+      "--name", "TC34", "--test-runner", RUNNER, "--godot-path", "PROBE", "--godot-docs", "PROBE"],
+      { encoding: "utf8" });
+    const bp = path.join(probe, ".pi", "kit-binding.json");
+    let ok1 = fs.existsSync(bp);
+    let b = {};
+    try { b = JSON.parse(fs.readFileSync(bp, "utf8")); } catch (e) { ok1 = false; }
+    const ok2 = !!(b.variant && b.variant.test_runner);
+    // ③ 与模板实际一致：产物里应出现同一命令串（本批命令形态已占位化）
+    let ok3 = false;
+    try {
+      const gen = fs.readFileSync(path.join(probe, ".pi", "agents", "tester.toml"), "utf8");
+      ok3 = gen.includes(RUNNER);
+    } catch (e) { ok3 = false; }
+    // ④ kit_commit 可在 kit 仓解析
+    let ok4 = false;
+    try {
+      const g = spawnSync("git", ["-C", KIT, "cat-file", "-e", String(b.kit_commit)], { encoding: "utf8" });
+      ok4 = g.status === 0;
+    } catch (e) { ok4 = false; }
+    check("TC34 kit-binding：存在 ∧ test_runner 非空 ∧ 与模板一致 ∧ kit_commit 可解析",
+      a.status === 0 && ok1 && ok2 && ok3 && ok4,
+      `exit=${a.status} 存在=${ok1} 非空=${ok2} 与模板一致=${ok3} commit可解析=${ok4}`);
+  }
+  {
+    /* TC33（2026-09-29 · #11(a)）：
+`--pack none`（引擎无关项目）不得泄漏引擎名。
        事故形态：apply-kit 的 `{{ENGINE}}` 默认写死 "Godot"/"4.7" ⇒ 产物在 AGENTS.md / coordinator.toml /
        designer.toml 三处出现引擎名（对方实测 3 行）。修法：引擎默认值随 pack（none ⇒ TODO-选引擎）。 */
     const probe = path.join(TMP, "tc33-none");
