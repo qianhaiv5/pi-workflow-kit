@@ -232,7 +232,7 @@ grep -rnE '[A-Za-z]:[\\/](Program Files|npm-global|Godot[^ \\]*)[\\/]' --include
 | 2 | `packs/godot/agents/tester.toml.tmpl` | 113/113 | 2 | **两边都陈旧** | **L2 正文 + ❌L3 片段** | 差 2 行 = 成本基线（kit `171/1884` · 源 `189/2158` · **现值 `215/2507`**）⇒ 改**口径句 + 出处指针**，禁裸数字 | 待评估 |
 | 3 | `packs/godot/agents/systems-maintainer.toml.tmpl` | 179/183 | 13 | 源领先 | **L2 正文 + ❌L3 片段** | 源侧标注上行 | 待评估 |
 | 4 | `packs/godot/agents/例行巡检-checklist.md.tmpl` | 75/98 | 36 | 源领先 | **L2 正文 + ❌L3 片段（门禁编号）** | 上行通用条目；门禁编号改占位 | 待评估 |
-| 5 | `packs/godot/gitignore.tmpl` | 29/31 | 2 | 源领先 | **按行拆**：L1 行（子代理 staging / 证据副本禁入库）→ `core/gitignore.append`；L2 行（Godot 缓存类）→ pack | 拆文件 | 待评估 |
+| 5 | `packs/godot/gitignore.tmpl` | 29/31 | 2 | 源领先 | **按行拆**：L1 行（子代理 staging / 证据副本禁入库）→ `core/gitignore.append`；L2 行（Godot 缓存类）→ pack | 拆文件 | ✅ **已落地（去重方案 · 2026-09-30）**：core=引擎无关**手写 kit 资产** / pack=**派生物** ⇒ 去重方向 = **派生侧剔除 core 已有行**（实测剔 6 行），牙口 **TC35**（两文件非注释非空行集合无交集）。**不做**「按行分类写两处」—— 两文件职责已分离，分类器只增判断面、无收益 |
 | 6 | `skills/gdmcp/SKILL.md` | 90/82 | 8 | kit 领先 | **L2（待 L3 复筛）** | 逐句筛项目专属引用后由源侧采纳 | 待评估 |
 | 7 | `skills/godot-bug-hunt/SKILL.md` | 120/104 | 16 | kit 领先 | **L2（待 L3 复筛）** | 同上 | 待评估 |
 | 8 | `skills/godot-docs/SKILL.md` | 99/90 | 17 | kit 领先 | **L2（待 L3 复筛）** | 同上（含 `{{GODOT_DOCS_DIR}}` 占位） | 待评估 |
