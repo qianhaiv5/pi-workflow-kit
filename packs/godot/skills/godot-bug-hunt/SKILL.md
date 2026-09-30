@@ -34,7 +34,7 @@ signal for the bug — one that goes red on THIS bug — you will find the cause
    run it standalone.
 
 6. **C# unit test** (for C# logic) — Extract the buggy logic into a pure C# method,
-   test with xUnit outside Godot.   <!-- 变体：跑器/框架由 `apply-kit --test-runner` 决定（KIT-GOVERNANCE §2 变体声明制） -->
+   test with xUnit outside Godot. （变体：若项目有 C#；本仓无 C# 测试工程）
 
 ### Tighten the loop
 
