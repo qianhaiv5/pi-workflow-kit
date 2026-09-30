@@ -156,7 +156,29 @@ try {
     check("TC29 mcp.json.tmpl 无源机布局残留", !/Godot_v4/.test(mcpT));
   }
   {
-    /* TC34（2026-09-30 · KIT-GOVERNANCE §2.1）：消费方安装事实单点 `.pi/kit-binding.json`
+    /* TC35（2026-09-30 · §6 #5）：两个 gitignore 产物**不得有重复行**（消费方会拿到双份）。
+       core/gitignore.append = 引擎无关的 kit 手写追加包；packs/<engine>/gitignore.tmpl = 源项目 .gitignore 派生。
+       判据：两侧的「非注释、非空」行集合**相交为空**（去重方向 = 派生侧剔除，禁反向动 kit 手写资产）。 */
+    const readPlain = (rel) => {
+      try {
+        return fs.readFileSync(path.join(KIT, rel), "utf8").split("\n")
+          .map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+      } catch (e) { return null; }
+    };
+    const coreG = readPlain("core/gitignore.append");
+    const packG = readPlain("packs/godot/gitignore.tmpl");
+    let inter = [];
+    if (coreG && packG) {
+      const s = new Set(coreG);
+      inter = packG.filter((l) => s.has(l));
+    }
+    check("TC35 core/gitignore.append 与 packs/*/gitignore.tmpl 无重复行",
+      coreG !== null && packG !== null && inter.length === 0,
+      inter.length ? `重复 ${inter.length} 行：${[...new Set(inter)].slice(0, 5).join(" | ")}` : "");
+  }
+  {
+    /* TC34（2026-09-30 · KIT-GOVERNANCE §2.1）：
+消费方安装事实单点 `.pi/kit-binding.json`
        四条判据：① 文件存在 ② variant.test_runner 非空 ③ **与模板实际替换值一致**（禁「声明一个、正文另一个」）
        ④ kit_commit 能在 kit 仓解析（`git cat-file -e`）。
        动机：此前版本锚只能靠人写采纳记录 —— 无自动对账。 */

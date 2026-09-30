@@ -213,6 +213,31 @@ function applyPackVariants(dstRel, text) {
   }).join("\n");
 }
 
+
+/* ── 多目标去重（2026-09-30 · §6 #5 落地）───────────────────────────────
+   背景：`core/gitignore.append`（引擎无关的临时产物/噪音）与 `packs/<engine>/gitignore.tmpl`
+   （源项目 .gitignore 派生）在**通用行上重复** ⇒ 消费方会拿到双份。
+   处置（判断依据，非机械照抄）：**core 侧是手写 kit 资产**（引擎无关、跨项目通用），
+   pack 侧是派生品 ⇒ 去重方向 = **派生侧剔除已在 core 中出现的行**（禁反向：否则会动 kit 手写资产）。
+   判据（TC35）：两侧的**非注释、非空行**集合**无交集**。
+   （注：不做「按行分类写两处」的完整多目标生成 —— 两文件职责已分离，分类器会引入新判断面且无收益。） */
+function dedupeAgainstCore(dstRel, text) {
+  if (!/^packs\/.+\/gitignore\.tmpl$/.test(dstRel)) return text;
+  const corePath = path.join(KIT, "core", "gitignore.append");
+  if (!fs.existsSync(corePath)) return text;
+  const coreLines = new Set(
+    fs.readFileSync(corePath, "utf8").split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#"))
+  );
+  const kept = text.split("\n").filter((l) => {
+    const s = l.trim();
+    if (!s || s.startsWith("#")) return true;          /* 注释/空行保留（可读性） */
+    return !coreLines.has(s);
+  });
+  const dropped = text.split("\n").length - kept.length;
+  if (dropped > 0) log(`去重：${dstRel} 剔除 ${dropped} 行（已由 core/gitignore.append 提供）`);
+  return kept.join("\n");
+}
+
 /* ── ④ 区段标记规则（按文本锚点，不按行号） ─────────────────────── */
 const MARKERS = [
   { dst: "core/agents/PIPELINE.md.tmpl", pack: "godot",
@@ -320,6 +345,7 @@ function transform(dstRel, raw) {
   if (dstRel.startsWith("packs/")) {
     text = applyPackWords(text);                                   /* TC31：pack 命令形态占位化 */
     text = applyPackVariants(dstRel, text);                        /* TC31：prose 提及行级变体标记（幂等） */
+    text = dedupeAgainstCore(dstRel, text);                        /* #5：与 core/gitignore.append 去重 */
   }
   // 行尾统一 LF：kit 是跨平台分发物，源项目里可能混 CRLF（外部技能包/手写文件）⇒ 不统一会与 --check 假漂移
   return text.split(String.fromCharCode(13) + String.fromCharCode(10)).join(String.fromCharCode(10));
