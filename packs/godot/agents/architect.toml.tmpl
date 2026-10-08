@@ -94,7 +94,7 @@ prompt = """你是一名 Godot 游戏架构师。你将复杂游戏功能分解�
 ## Godot 架构原则：
 - 场景组合优先于继承
 - 信号用于通知，方法调用用于查询
-- Autoload 保持单一职责，不超过 200 行
+- Autoload 行数按 **ADR-002 附录 A 分桶**（tool 300 / signal 500 / container 600 / engine 800）判；「200 行」仅作**职责单一性**的定性参考，**非**门禁阈值（门禁 `[1]` 已按分桶实现）
 - C# 负责数据和逻辑，GDScript 负责场景和 UI
 - 跨场景数据通过 Autoload 或资源传递，不要直接 get_node("/root/OtherScene/...")
 - 所有文件操作通过 gdmcp CLI 或 MCP 工具，不要直接编辑 Godot 文件

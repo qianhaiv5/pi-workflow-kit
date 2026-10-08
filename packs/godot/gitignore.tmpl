@@ -16,10 +16,16 @@ assets/map_tiles/
 # gdmcp CLI (regenerable toolchain)
 .gdmcp/
 
+# 机器本地 Godot 可执行指针（tools/check_health.py:resolve_godot_bin 第 3 级回落；不入库）
+/.godot-bin
+
 # Python cache (tools/*.py)
 
 # Track B 母版原片（不入 res:// 导入 / 不入库；仅追踪 .gdignore 标记）
 assets/panoramas/_raw/*
 !assets/panoramas/_raw/.gdignore
+# AVG 立绘母版原片（同 panoramas 约定：压缩后入包，原片只留本地）
+assets/images/avg/_raw/*
+!assets/images/avg/_raw/.gdignore
 # 子代理 gdmcp staging / 证据副本（批W12 起：禁入库）
 .pi/tmp/
