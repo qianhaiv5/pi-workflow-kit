@@ -189,6 +189,8 @@ function addCore() {
   plan.push({ from: path.join(c, "CONTEXT.md.tmpl"), to: "CONTEXT.md", kind: REG("md") });
   plan.push({ from: path.join(c, "LESSONS.md.tmpl"), to: "LESSONS.md", kind: REG("md") });
   plan.push({ from: path.join(c, "designs-README.md"), to: ".pi/designs/README.md", kind: REG("md") });
+  if (fs.existsSync(path.join(c, "doc-governance.md.tmpl"))) plan.push({ from: path.join(c, "doc-governance.md.tmpl"), to: "docs/文档治理规范.md", kind: REG("md") });
+  if (fs.existsSync(path.join(c, "doc-governance-ledger.md"))) plan.push({ from: path.join(c, "doc-governance-ledger.md"), to: ".pi/designs/文档治理台账.md", kind: REG("md") });
   plan.push({ from: path.join(c, "gitattributes.tmpl"), to: ".gitattributes", kind: REG("text") });
   plan.push({ from: path.join(c, "editorconfig.tmpl"), to: ".editorconfig", kind: REG("text") });
   plan.push({ from: path.join(c, "gitignore.append"), to: ".gitignore", kind: "append" });

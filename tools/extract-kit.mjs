@@ -59,6 +59,8 @@ const FILES = [
   { src: ".pi/agents/例行巡检-checklist.md",      dst: "packs/godot/agents/例行巡检-checklist.md.tmpl",       pack: "godot" },
   { src: ".mcp.json",                             dst: "packs/godot/mcp.json.tmpl",              pack: "godot" },
   { src: ".gitignore",                            dst: "packs/godot/gitignore.tmpl",             pack: "godot" },
+  // 文档治理规范：跨项目规则（源项目仍保留本项目版本；kit 侧做去项目化替换）
+  { src: "docs/文档治理规范.md",                   dst: "core/doc-governance.md.tmpl",             pack: "core" },
 ];
 
 /* ── ③ 技能分配 ─────────────────────────────────────────────────── */
@@ -87,8 +89,8 @@ const PATCHES = [
     from: "| **tester** | read-only + MCP + bash | deepseek-flash (medium) | godot-tdd, godot-bug-hunt | 所有任务 |",
     to: "| **tester** | read-only + MCP + bash | {{MODEL_MEDIUM}} | （pack 技能：TDD / bug-hunt） | 所有任务 |" },
   { dst: "core/agents/PIPELINE.md.tmpl",
-    from: "| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | deepseek-flash (high) | game-architecture-review, godot-tdd | 定期巡检/关键节点评审/复盘治理（按需） |",
-    to: "| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | {{MODEL_HIGH}} | game-architecture-review | 定期巡检/关键节点评审/复盘治理（按需） |" },
+    from: "| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | deepseek-flash (high) | game-architecture-review, godot-tdd | 定期巡检/关键节点评审/复盘治理 + **文档治理执行（唯一 `docs/**` 写者）**（按需） |",
+    to: "| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | {{MODEL_HIGH}} | game-architecture-review | 定期巡检/关键节点评审/复盘治理 + **文档治理执行（唯一 `docs/**` 写者）**（按需） |" },
   { dst: "core/agents/PIPELINE.md.tmpl",
     re: "^\\*\\*成本账（口径：以最近一次全量实测为准）\\*\\*：.*$", flags: "m",
     to: "**成本账（口径：以最近一次全量实测为准）**：源项目实测 全量 ≈ **160–213 s**；单模块定向 ≈ **5–20 s**（新项目首次全量后回写本行）。\n> ⚠️ 脚本/用例数**随批次增长** ⇒ **禁把数字当长期不变基线**；要核对现值就跑一次全量并回写本行。\n**工具**：测试入口分「定向」与「全量」两个显式命令（具体命令由 pack 提供，禁用「先跑全量看看」）。" },
@@ -146,6 +148,19 @@ const PATCHES = [
   { dst: "core/skills/scope-check/SKILL.md",
     from: "5. **成本校验**：Normal 任务书若含「全量 GUT 1101」「L4 编辑器 load」→ 降为受影响模块 + L1",
     to: "5. **成本校验**：Normal 任务书若含「全量测试」「L4 编辑器 load」→ 降为受影响模块 + L1" },
+  /* ── 文档治理规范（2026-10-19 共享）── 去项目化：源码目录/后缀、架构主题、测试与验收文档 ── */
+  { dst: "core/doc-governance.md.tmpl",
+    from: "| 代码注释 | `.gd` / `.py` / `.cs` 的注释与文件头 |",
+    to: "| 代码注释 | 源码文件的注释与文件头 |" },
+  { dst: "core/doc-governance.md.tmpl",
+    from: "| 2 | 架构与决策 | 模块边界、依赖方向、决策记录 | `docs/架构设计/`、`docs/架构设计/ADR/` |",
+    to: "| 2 | 架构与决策 | 模块边界、依赖方向、决策记录 | `docs/<架构主题>/`、`docs/<架构主题>/ADR/` |" },
+  { dst: "core/doc-governance.md.tmpl",
+    from: "| 4 | 测试与验收 | 测试分层、基线、判据 | `docs/TDD.md`、`docs/架构设计/质量门禁规范.md` |",
+    to: "| 4 | 测试与验收 | 测试分层、基线、判据 | `docs/TDD.md`、`docs/<测试与验收文档>.md` |" },
+  { dst: "core/doc-governance.md.tmpl",
+    from: "grep -rnE \"$BAN\" features ui autoload content tools --include='*.gd' --include='*.py'",
+    to: "grep -rnE \"$BAN\" <源码目录> --include='<源码后缀>'" },
 ];
 
 /* ── ③c core 词表替换（只作用于 pack 块**之外**的文本） ─────────── */

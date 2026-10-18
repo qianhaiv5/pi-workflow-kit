@@ -73,7 +73,7 @@
 |---|---|---|---|
 | **architect**（**只读参考档**） | read, grep, find, ls, agent_message | write, edit | 只产出裁决/设计文本 → 不得写文件。**只读档的法定形态 = 无 write / edit / bash / mcp**（bash 能重定向写文件，mcp 含 `modify_script` ⇒ 二者都会破坏只读性） |
 | **tester** | read, grep, find, ls, bash, write, edit, agent_message | mcp | 必须自写验收报告 + 改 `.pi/designs/README.md` 索引行（2026-09-23 两轮实证）；bash 跑引擎 CLI / 测试脚本（见 pack） |
-| **systems-maintainer** | read, grep, find, ls, bash, write, edit, agent_message | mcp | 必须写巡检报告 + 回写 `CONTEXT.md` / README |
+| **systems-maintainer** | read, grep, find, ls, bash, write, edit, agent_message | mcp | 必须写巡检报告 + 回写 `CONTEXT.md` / README；**文档治理执行者（唯一 `docs/**` 写者）** |
 | **designer** | read, grep, find, ls, **bash**, write, edit, agent_message | mcp | 写 GDD/设计文档（write/edit）＋ 只读核验文档规模/结构（`wc -l` / `git status`）；⚠️ 已有 write ⇒ 加 bash **不引入新权限面**（bash 写文件与 write 同级） |
 | **programmer** | read, write, edit, grep, find, ls, bash, **mcp**, agent_message | — | mcp 是 引擎资源改动的第二合法通道（R1：引擎 CLI CLI **或** MCP） |
 | **coordinator** | read, write, edit, grep, find, ls, bash, mcp, Agent, agent_message, subagent, get_subagent_result, steer_subagent | — | 全量（含调度类工具） |
@@ -123,7 +123,9 @@
 | `map_config.scene_bg` 的 `anim` 值域（单源枚举 · ANIM-3） | `tests/unit/test_gut_scene_bg_anim.gd` |
 | comic 时间轴收编等价（冻结参考对拍 + 单源词表 + 6 份生产 JSON 值快照 · ANIM-4） | `tests/unit/test_gut_comic_timeline_parity.gd` |
 | 序章 pause 数据化 + i18n 键化（32 键 zh/en == 数据现值逐字 · `*_keys` 平行结构 · 三级 pause 与代码缺省一致 · `_fallback_data()` 段键集 6 · 源码裸常量锁 · 批S） | `tests/unit/test_gut_prologue_i18n_pause_contract.gd` |
+| 序章**分段跳过**契约（flag 谓词真值表 · 段令牌 `_seg_token` 防双推进 · `_seg_tween` 补间收口 · Q5 逐段结算（问卷默认/欺诈/漫画硬中止/AVG abort）· CTRL 入口与 300 ms CD · ESC 分支冻结源码块 · 批SS） | `tests/unit/test_gut_prologue_segment_skip.gd` |
 | 测试存档隔离（`set_test_dir`） | 见门禁 `[19]` |
+| AVG 编辑器（打开/指纹/不可达/同一校验器/JSON 只读 · 3a + 表单编辑/序列化/保存/指纹冲突 · 3b-1） | `tests/unit/test_gut_avg_editor.gd` |
 
 > 另：契约测试**禁钉死易变计数**（应断关系式，如「每键都在 i18n 表且值逐字相同」）；字面量计数必须说明为何不随批次变化。
 
@@ -139,8 +141,8 @@
 > ⚠️ **两项口径告警（2026-10-10 实测）**：① **用例数 +13**（2903 → 2916）且在 10-07→10-10 期间**无一次全量** ⇒ 漂移直到本次才被观测（该批 `tests/` 零改动，差异来自 10-07 之后的测试面提交）——**再次印证「全量长期不跑 ⇒ 计数静默漂移」**；② **耗时 ×1.82 已归因并关闭 = 526 MiB 视频夹具一次性重建**（判据：两次全量日志均为 `[fixture] REBUILD (stamp miss)` ⇒ 之后为 `REUSE (skip 526 MiB rebuild)`；**预测检验命中** = 夹具有效后全量 **398.1s**，Δ≈345s）⇒ **非回归**。⇒ 跑前若 `.fixture_ver` 缺失/戳不符，预算按 **≈750 s** 计。
 > ℹ️ **该告警的现值快照（2026-10-13）**：上条的 `2916` 是 **10-10 当时的现值**，现已是**历史值**（现值 = 3084，见本行 §成本账）；10-13 全量 **+168 用例已逐文件全解释**（五份新测试 + 三份扩用例）⇒ **本告警的根因（全量长期不跑 ⇒ 计数静默漂移）仍成立**，请继续按它约束。
 > ⚠️ **解释器前置（新，2026-10-10）**：门禁类测试大量 `OS.execute("python", …)` ⇒ **跑任何 GUT/门禁前先 `python -V`**；若出现「一片 `[9009] expected to equal [0]`」= 子进程解释器不可用（**不是代码问题**），处置见出处报告 §三/§四。
-> ⚠️ **回写纪律（2026-10-09 巡检 P1-① 坐实）**：本行曾停在 09-29 批Z6 的 `221/2554` **而 10-04→10-07 共 9 次全量无一次回写** ⇒ **每次全量后同批回写本行 + 同句给出处**（禁留旧值）。
-> ⚠️ **该义务目前只写在本行**（`tester.toml` 未入 DoD）⇒ 2026-10-13 巡检实测：10-13 全量由 Coordinator 跑，回写仍靠**下一轮巡检追认**（**第 2 次**）⇒ 已登记为巡检 P1-2（建议：把「Full 档收尾必须回写本行」写进 `tester.toml` DoD 末条）。
+> ⚠️ **回写纪律（2026-10-09 巡检 P1-① 坐实 · 2026-10-13 升级为 DoD 条款）**：本行曾停在 09-29 批Z6 的 `221/2554` **而 10-04→10-07 共 9 次全量无一次回写** ⇒ **每次全量后同批回写本行 + 同句给出处**（禁留旧值）；**细则（触发/动作/判据/责任人）见「收尾硬清单」第 6 条子条**。
+> ✅ **该义务已落为 DoD 条款（2026-10-13 巡检 P1-2 闭合）**：由 2026-10-13 批写入「收尾硬清单」第 **6** 条子条（见下）⇒ 不再只靠本行自律，也不再靠「下一轮巡检追认」；`tester.toml` 侧同批改为「只写口径句 + 指针」（**现值唯一真源 = 本行 §成本账行**），巡检只作**兜底复核**（`.pi/agents/例行巡检-checklist.md` §6）。
 > 历史基线（F5–F13 九批后例行巡检全量实测）：2026-09-26 = `Scripts 189 / Tests 2158 / Passing 2150 / Risky-Pending 8 / Failing 0 / Asserts 16445 / Orphans 33 / Time 304.319s`，见 `.pi/designs/巡检报告-2026-09-26-凌晨.md` §〇 基线表 + §一。
 > ⚠️ 该轮 log 已随 2026-09-26 磁盘清理删除（故**出处只写报告**，不写 `D:/tmp/*.log`）：**禁引用 `D:/tmp/*.log` 作为出处**；要复查就跑一次全量。
 > ⚠️ 脚本/用例数**随批次增长**（历史：2026-09-18 = 160/1718 ⇒ 09-23 = 171/1884 ⇒ 09-24 D1 = 171/1885 ⇒ 09-24 B2 = 177/1978 ⇒ 09-25 T-11 = 178/1999 ⇒ 09-25 B5 = 180/2031 ⇒ 09-26 B1-fix = 181/2040 ⇒ 09-26 B1-fix2 = 181/2045 ⇒ 09-26 B1-fix3 = 181/2052 ⇒ 09-26 F5–F13 = 189/2158 ⇒ 09-28 W27b = 202/2360 ⇒ 09-28 W28b = 203/2368 ⇒ 09-28 W34 修复轮1 = 205/2396（Failing 0）⇒ **09-28 W36 = 206/2416（Failing 0）⇒ 09-29 批X2 = 210/2456 ⇒ 09-29 批X3b+X4 = 213/2488 ⇒ 09-29 批Y1+Y2 = 215/2507（Failing 0）⇒ 10-10 P1-② = **247/2916** ⇒ **10-13 本批 = 252/3084（Failing 0，当前）**）⇒ **禁把数字当长期不变基线**；要核对现值就跑一次全量并回写本行。
@@ -163,7 +165,7 @@
 | **architect** | read-only + MCP | deepseek-flash (high) | game-architecture-review, game-design-grill, game-domain-modeling | 所有任务 |
 | **programmer** | read/write/edit + MCP | {{MODEL_HIGH}} | game-domain-modeling | 所有任务 |
 | **tester** | read-only + MCP + bash | {{MODEL_MEDIUM}} | （pack 技能：TDD / bug-hunt） | 所有任务 |
-| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | {{MODEL_HIGH}} | game-architecture-review | 定期巡检/关键节点评审/复盘治理（按需） |
+| **systems-maintainer** | read + bash + MCP + write/edit(仅文档资产) | {{MODEL_HIGH}} | game-architecture-review | 定期巡检/关键节点评审/复盘治理 + **文档治理执行（唯一 `docs/**` 写者）**（按需） |
 | **scope-check（技能）** | 只读（read/grep/find/ls/bash 只读） | —（Coordinator 内嵌调用） | scope-check | **强制**：spawn 任何子代理前 |
 
 > 表中出现的 pack 专属技能（如架构审查 / 安全重构）由所选 pack 提供；未装该 pack 时该列技能不可用。
@@ -207,7 +209,8 @@ Normal 档 tester 只测受影响模块 + L1；Full 档全量 L1-L4
 
 ### 阶段 5：复盘与进化（条件触发，2026-08-28 收紧）
 仅当满足任一条件才复盘：出现新模式/新坑、跨系统影响（存档/信号契约/autoload）、修正了流水线本身。
-1. **设计偏差回写（仅当有设计文档 ∧ 实际发生偏差）**：回写文档末节「实际补充与修正」（记录：新字段、新增模块、对原设计的修正、测试覆盖、已知限制；凡与原文冲突以该节为准）。无偏差 → 只追加一行状态，不写全文。
+1. **设计偏差回写（仅当有设计文档 ∧ 实际发生偏离）**：**只把正文改到当前口径**（新字段 / 新模块 / 已知限制写进对应小节）；**禁新增「实际补充与修正」类末节**；决策级变更 ⇒ 写 ADR（`docs/架构设计/ADR/`）；过程与理由 ⇒ `.pi/designs/`。无设计文档或无偏离 → 跳过。
+1b. **文档裁决（每批收尾必跑）**：本批发生文档变更 ⇒ 实现代理**只在交付报告里写「文档建议」**（改哪份、改成什么）⇒ Coordinator 裁决 ⇒ `systems-maintainer` 执行落 `docs/**`。**实现代理（programmer/tester/architect/designer）不直接改 `docs/**`**（规范 = `docs/文档治理规范.md` §三.7）。
 2. 新模式/新坑 → 写入 LESSONS.md，检查是否需要更新 AGENTS.md
 3. **收尾硬清单 · 推送断言（2026-09-23 立，Q6 · **2026-09-27 改时机**）**：**推送只在阶段性收口点做**（见下），但**一旦要推**就必须跑断言脚本、判定只看退出码 + AHEAD==0：
    ```bash
@@ -249,6 +252,11 @@ Normal 档 tester 只测受影响模块 + L1；Full 档全量 L1-L4
    - **失败处置**：改写成「出处指针 + 实测命令」形态（数字可留在指针句内，但须与本句出处同批复核）；**`*.toml` 不在 Coordinator 写面** ⇒ 记入报告「待派 Lite」，不得静默放任。
    - 数字口径（2026-09-18 加严，同批约束）：测试默认**定向**跑 `tools/测试脚本 -Files <测试文件>`；**全量每次巡检最多一次**，且报告必须写明「测试范围 + 命令 + 实测耗时」。
    - 🔴 **计数口径（2026-10-11 立 · 批 ANIM-2 实证）**：`tools/测试脚本 -Files` 把每个 entry 的 basename 交给 GUT 的 定向过滤 —— 后者是**子串匹配（文件名 CONTAINS）** ⇒ 传**前缀形** entry（如 `test_gut_narrative`）会**连带跑同前缀兄弟文件**（实测 `Scripts 8 / Tests 107`）⇒ 那些用例**又**在各自 entry 里再算一遍 ⇒ 把 runner 输出的 `Tests` **逐条求和会虚高**（ANIM-2 实测：求和 **467** vs 真值 **368**，**虚高 99**）；该形态还可触发 **`CONTRACT FAIL×2 / exit 3`**。⇒ **两条铁律**：① `-Files` 传参**一律逐条 basename（带 `.gd`）**，**禁**前缀形/通配；② **报用例数一律用静态 `grep -c '^func test_'`**（**禁** runner 求和），“文件数”用 `ls … | wc -l`。
+   - 🔴 **子条 · 全量后同批回写 §成本账（2026-10-13 立 · 巡检 P1-2 升级为 DoD 条款）**：本条是「禁孤立裸数字」在**全量场景**下的**触发-动作-判据**落点（第 6 条本体管**口径形态**，本条管**回写时机与责任人**）——
+     - **① 触发** = **任何一次全量测试 跑完**（无论谁跑、何档位、走哪条白名单理由）。
+     - **② 动作** = **同批**回写 §成本账行的**现值** + **同句给出处**（**报告文件名 + 节号**）；**禁**把 `D:/tmp/*.log` 当长期出处（log 会被清盘删除，见本行上方告警）。
+     - **③ 判据** = 下轮巡检**现跑** `grep` 该行现值 **==** 最近一次全量实测值（同句出处所指报告 §节）；**不等 ⇒ 记 P1**。
+     - **④ 责任人** = **谁跑的全量谁回写**（跑方 = Coordinator 或 tester）；**巡检只作兜底复核**（复核项见 `.pi/agents/例行巡检-checklist.md` §6），不再承担「下一轮追认回写」。
 7. **收尾硬清单 · 自述数字 ↔ 实测 双向校验（2026-09-29 立，玩家拍板 A7）**：以下三类**只做单向校验**（各复发 ≥3 次：09-23 → 09-26 → 09-28 → 09-29）⇒ 收尾时**必须三跑**，命中即本批修净（禁登记了事）。
    ```bash
    # ⓵ 索引重号（.pi/designs/README.md）：每条索引行首个反引号内的文件名不得重复
@@ -263,6 +271,15 @@ Normal 档 tester 只测受影响模块 + L1；Full 档全量 L1-L4
    - **判据**：⓵ 输出**空**；⓶ 表头「计数对照」的份数/索引行数 **== 实测**（±0）；⓷ 统计行的「活动条数 / 行数」**== 实测**（口径 = `grep -c '^## 2026-'` 与 `wc -l`）；⓸ `例行巡检-checklist.md` 写的门禁项数 **== `健康门禁` 实际项数**。任一项不等 ⇒ 本批判失败。
    - **失败处置**：就地订正自述数字（**索引重号**：删无提交号那一行，保留可追溯者；两组信息都有价值时合并为一行）。⓸ 若 `健康门禁` 新增了门禁项而 `例行巡检-checklist.md` 未同步 ⇒ **同批订正**（`docs/架构设计/质量门禁规范.md` 的映射表一并核）。
    - **警戒**（实测先例）：`ls .pi/designs/*.md | wc -l` 与索引行数**长期不等**属正常（一行可登记多份文件）；等号只适用于「未索引 = 0」的反查方向 ⇒ ⓶ 只判**自述 == 实测**，不判「文件数 == 索引行数」。
+8. **收尾硬清单 · 文档导航双向校验（2026-10-19 立）**：凡新增 / 改名 / 移动 `docs/**`，收尾必须跑规范 §四判据 7（两条都要 0 输出）：
+   ```bash
+   for d in docs/*/; do n=$(basename "$d"); grep -q "$n" docs/README.md || echo "未导航: $n"; done
+   for d in docs/*/; do [ -f "$d/README.md" ] || { echo "缺 README: $d"; continue; }; \
+     for f in "$d"*.md; do b=$(basename "$f"); [ "$b" = README.md ] && continue; \
+       grep -q "$b" "$d/README.md" || echo "未列出: $d$b"; done; done
+   ```
+   - **判据**：两条输出都为空。**失败处置**：补总导航或主题 README 的文档清单；补完重跑。
+   - **写入面**：`docs/**` 只有 `systems-maintainer` / 主代理能改（实现代理只提建议，见阶段 5 第 1b 条）。
 
 ### 阶段 6：系统健康（定期/关键节点）
 Coordinator 按需触发 systems-maintainer 执行：
@@ -300,10 +317,29 @@ Coordinator 按需触发 systems-maintainer 执行：
 ```bash
 # ① 先探（不写任何代码前）
 MSYS_NO_PATHCONV=1 ./.gdmcp/bin/gdmcp.exe --json doctor   # 或：curl -s -o /dev/null -w "%{http_code}" -m 3 http://127.0.0.1:9080/cli/v1/doctor
-# ② 不通则**自起一个**（editor_connected=true 是写通道的硬前提）
-#    Godot_*.exe --editor --headless --path <项目>   → 约 6s 后端口就绪；**记下 PID**
+# ② 不通则**自起一个**（editor_connected=true 是写通道的硬前提）—— 🔴 只用下方「② 的硬形态」，**禁**自由发挥
 # ③ 起完再查一次：Get-Process Godot*  ——  同类型编辑器**允许恰好 1 个**，多于 1 个立刻 kill 自己多余的那个
 ```
+
+#### ② 的硬形态（2026-10-14 立 · 事故：run `8a0555fa-0` 工具调用**挂死 5h26m** ⇒ 孤儿 run + 零交付）
+
+```bash
+# ① 落盘脚本（用 write 工具，禁 heredoc）—— D:/tmp/start_editor.ps1 内容（逐字，按本机替换 <GODOT_EXE> / <项目根>）：
+#     $exe = '<GODOT_EXE>'
+#     $p = Start-Process -FilePath $exe -ArgumentList '--editor','--headless','--path','<项目根>' -PassThru
+#     Write-Output $p.Id
+# ② 执行（工具调用必须**秒回** + 回显 PID）
+powershell -NoProfile -File D:/tmp/start_editor.ps1
+# ③ 等约 6s ⇒ 再查端口 + 按 CommandLine 参数去重数编辑器
+```
+
+- 🔴 **禁**（三条都会让该 bash 调用**阻塞到编辑器退出**，本次实测 `durationMs = 19,583,335`）：
+  1. **尾管** —— `... | tail -3` / `... | head -n 5`（MSYS bash 等 EOF，而后台子进程继承了该管道句柄 ⇒ 永不返回）
+  2. 起后台进程时带 `-RedirectStandardOutput/-RedirectStandardError`（只重定子进程的 1/2 号句柄，**不解绑**继承下来的管道）
+  3. 同一条命令里既起进程又做后续步骤（探端口 / 查进程 / 读日志）
+- **判据**：该 bash 调用 `durationMs` **< 5 s** ∧ 回显 PID ∧ `Get-Process` 可查。
+  ⇒ 若任一 toolResult 已出现 `durationMs > 60_000` ∧ 命令含 `Start-Process` ∧ 行尾含 `| tail`/`| head` = **已踩坑**（静默不是模型在思考）⇒ kill 该编辑器重来，**禁**干等。
+- 详见 `LESSONS.md` 续五十九 §1。
 - **禁**：编辑器不通就“先用 write/edit/bash 直写 `.gd` 后面再验”——那就是 R1 违规；正确做法是 ② 先修通道再动手。
 - **验收侧（🔴 2026-10-04 订正：必须 **双面** 证据 —— 单面已实证漏网）**：Coordinator 核子代理是否守规，**不看自述**，两面各给原始证据：
   1. **工具面**：读 session jsonl 数 `ok:true` 条数 + 工具直方图 ⇒ `write`/`edit` 落点**末段**以 `.gd`/`.tscn` 结尾 **∧** 不在 `.gdmcp/staging/` 下 = 违规。⚠️ **禁裸后缀正则**：`.gdmcp/staging/foo.gd.txt` 是 R1 唯一合法暂存面（2026-10-04 Coordinator 曾因此误报 14 处）。

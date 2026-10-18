@@ -38,7 +38,7 @@
 - 死信号 / 死代码 / 占位物（门禁覆盖）。
 
 ## 2. 资产标准化
-- 门禁脚本与**编号清单**一致性（现行 **23 项**：[1]–[23]，无 [9] 缺号误解——[9] 是 `check_infer_risk`；[21] = `tools/check_item_contract.py` 物品分类契约，批W27b 落地；[22] = `tools/check_narrative.gd` 叙事图校验 V1–V13（唯一实现 `features/narrative/narrative_validator.gd`；V13 = anim 参数，白名单单源 `features/animation/anim_whitelist.gd`），批A-AVG-1e 落地 · V13 于批 ANIM-1 扩（编号零新增、计数不变）；[23] = `tools/check_avg_modal.py` AVG 模态取值面（唯一事实源 `FILTER_CONTRACT`），批A-AVG-4/B2 落地）。**判据（可机跑）**：`python tools/check_health.py 2>&1 | grep -c '^✅\|^⚠️\|^❌'` 的输出 **==** 本行写的项数；新增门禁项而本文件/`docs/架构设计/质量门禁规范.md` 未同步 ⇒ 本批判失败（先例：20→21 静默滞留两轮，2026-09-29 批X1 订正）。
+- 门禁脚本与**编号清单**一致性（现行 **23 项**：[1]–[23]，无 [9] 缺号误解——[9] 是 `check_infer_risk`；[21] = `tools/check_item_contract.py` 物品分类契约，批W27b 落地；[22] = `tools/check_narrative.gd` 叙事图校验 **V1–V14**（唯一实现 `features/narrative/narrative_validator.gd`；V13 = anim 参数，白名单单源 `features/animation/anim_whitelist.gd`；V14 = 节点类型白名单）；[23] = `tools/check_avg_modal.py` AVG 模态取值面（唯一事实源 `FILTER_CONTRACT`），批A-AVG-4/B2 落地）。**判据（可机跑）**：`python tools/check_health.py 2>&1 | grep -c '^✅\|^⚠️\|^❌'` 的输出 **==** 本行写的项数；新增门禁项而本文件/`docs/架构设计/质量门禁规范.md` 未同步 ⇒ 本批判失败（先例：20→21 静默滞留两轮，2026-09-29 批X1 订正）。
 - 素材规范：`assets/panoramas/_raw/` 隔离（`.gdignore` + `.gitignore`）· `_spike/` 已迁移至 `tests/assets/`（**旧容器 `assets/panoramas/_spike/` 已于批T2 删除**，2026-10-01）· `export_presets.cfg exclude_filter` 与实际排除面一致。
 - 文档漂移：`CONTEXT.md` 版本指针（应指向最新版本条目）· ADR 状态 · `docs/架构设计/质量门禁规范.md` 的 **23 项**映射 · `docs/术语表.md` 与代码命名 · **`.pi/designs/README.md` 计数行与索引重号** · **`LESSONS.md` 统计行（条数/行数）**——后两项判据与命令见 `PIPELINE.md 阶段 5` 第 **7** 条。
 - 新增文件卫生：UTF-8 **无 BOM**、命名规范、`.import/.uid` 边车齐全。
@@ -89,6 +89,12 @@
    - **给不出证据** ⇒ **如实标为「未解项」**（写明：真档于 <时刻> 被写 · 变化前后值 · 已排除/未排除范围）——
      **禁**谎报「零触碰」、**禁**含糊成「未复核」。
 5. 报告给玩家的摘要必须含：**五项判定 · 行动清单条数（闭合/挂账）· 基线数字 · 真档对账结论 · 需要拍板的事项**。
+6. **§成本账兜底复核（2026-10-13 立 · 巡检 P1-2 的巡检侧判据）**：收口时**现跑**读 `.pi/agents/PIPELINE.md` §成本账行的**现值**，与**最近一次全量实测**（该行**同句出处**所指报告 §节）逐值对账 ⇒ **不等 ⇒ 记 P1**（先按「谁跑的全量谁回写」追溯回写，再复核）。
+   ```bash
+   grep -n '^\*\*成本账' .pi/agents/PIPELINE.md   # 现值行（与同句出处报告 §节 人工对账）
+   ```
+   - **口径**：巡检**只作兜底复核**，不承担回写 —— 回写**责任人 = 谁跑的全量谁回写**（跑方 = Coordinator 或 tester）；细则见 `PIPELINE.md` 阶段 5「收尾硬清单」第 **6** 条子条。
+   - 🔴 **本项只写指针，不复制任何数字/耗时**（现值唯一真源 = 上述 §成本账行）。
 
 ---
 
