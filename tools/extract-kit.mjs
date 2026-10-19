@@ -161,6 +161,12 @@ const PATCHES = [
   { dst: "core/doc-governance.md.tmpl",
     from: "grep -rnE \"$BAN\" features ui autoload content tools --include='*.gd' --include='*.py'",
     to: "grep -rnE \"$BAN\" <源码目录> --include='<源码后缀>'" },
+  { dst: "core/doc-governance.md.tmpl",
+    from: "游戏内日期（`2030+`，如登月绝对日）",
+    to: "游戏内日期（剧情绝对日等）" },
+  { dst: "core/doc-governance.md.tmpl",
+    from: "`2026-xx-xx` 一类开发日期",
+    to: "`YYYY-MM-DD` 一类开发日期" },
 ];
 
 /* ── ③c core 词表替换（只作用于 pack 块**之外**的文本） ─────────── */
